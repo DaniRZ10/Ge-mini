@@ -1,121 +1,145 @@
 """
-Ge-mini — Backend principal (FastAPI)
+Ge-mini — Backend Multimodelo (FastAPI)
 =====================================
-Este módulo inicializa la aplicación web, configura el servidor
-de archivos estáticos para la interfaz de usuario y define los 
-endpoints de la API para procesar los mensajes del chat.
+Soporta Google Gemini, OpenAI GPT y Groq (Llama/Mixtral).
+Gestiona una memoria de conversación unificada.
 """
 
 from fastapi import FastAPI, HTTPException
-from fastapi.staticfiles import StaticFiles  # Utilizado para servir archivos estáticos como HTML, CSS y JS
-from pydantic import BaseModel  # Utilizado para la validación y serialización de datos
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 import os
 from dotenv import load_dotenv
-from google import genai
-from google.genai import errors
 
-# Cargar variables de entorno desde el archivo .env
+# SDKs de los proveedores
+from google import genai
+from google.genai import errors as gemini_errors
+from openai import OpenAI, OpenAIError
+from groq import Groq, GroqError
+
+# Cargar configuración
 load_dotenv()
 
-# Cliente de Gemini
-API_KEY = os.getenv("GEMINI_API_KEY")
-if not API_KEY:
-    print("ADVERTENCIA: No se ha configurado 'GEMINI_API_KEY' en el entorno.")
-    gemini_client = None
-    chat_session = None
-else:
-    gemini_client = genai.Client(api_key=API_KEY)
-    # Inicializamos una sesión global de chat para mantener el historial (memoria)
-    chat_session = gemini_client.chats.create(model='gemini-2.5-flash')
+# Inicialización de Clientes
+clients = {
+    "gemini": None,
+    "openai": None,
+    "groq": None
+}
 
-# ──────────────────────────────────────────────
-# 1. Inicialización de la aplicación
-# ──────────────────────────────────────────────
-# Se crea la instancia principal de FastAPI. Aquí se pueden configurar
-# metadatos como el título, descripción y versión de la API que luego
-# se mostrarán en la documentación automática (Swagger UI).
+if os.getenv("GEMINI_API_KEY"):
+    clients["gemini"] = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+
+if os.getenv("OPENAI_API_KEY"):
+    clients["openai"] = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+if os.getenv("GROQ_API_KEY"):
+    clients["groq"] = Groq(api_key=os.getenv("GROQ_API_KEY"))
+
+# Memoria de conversación global (Unificada)
+# Estructura: [{"role": "user"|"assistant", "content": "..."}]
+chat_history = []
+
 app: FastAPI = FastAPI(
-    title="Ge-mini API",
-    description="Clon de ChatGPT potenciado por Google Gemini",
-    version="0.1.0",
+    title="Ge-mini Multi-Model API",
+    version="0.2.0",
 )
 
-# ──────────────────────────────────────────────
-# 2. Servir archivos estáticos de Frontend
-# ──────────────────────────────────────────────
-# FastAPI permite "montar" una aplicación o un directorio estático en una ruta específica.
-# Al montar el directorio "static" en la ruta "/static", todos los archivos contenidos 
-# en esta carpeta (como index.html, estilos o scripts) estarán accesibles al cliente.
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# ──────────────────────────────────────────────
-# 3. Modelos de datos (Pydantic)
-# ──────────────────────────────────────────────
-# Pydantic se encarga de validar los datos de entrada y salida basándose 
-# en anotaciones de tipos de Python de manera automática.
-
 class ChatRequest(BaseModel):
-    """
-    Define la estructura requerida para los mensajes que envía el cliente web.
-    Se espera recibir un objeto JSON con una propiedad 'message' de tipo texto.
-    """
     message: str
-
+    model: str  # Nuevo: el frontend envía el modelo seleccionado
 
 class ChatResponse(BaseModel):
-    """
-    Define la estructura de la respuesta que el servidor devolverá al cliente.
-    Garantiza que la API siempre responda con un JSON consistente.
-    """
     response: str
-
-
-# ──────────────────────────────────────────────
-# 4. Definición de Endpoints (Rutas)
-# ──────────────────────────────────────────────
+    provider: str
 
 @app.get("/")
-async def root() -> dict[str, str]:
-    """
-    Ruta raíz de la API. Realiza un 'health-check' sencillo para
-    verificar que el servidor está levantado y funcionando correctamente.
-    """
-    return {"status": "Ge-mini backend is alive 🚀"}
+async def root():
+    return {"status": "Omni-Chat is alive 🚀", "providers": [k for k, v in clients.items() if v]}
 
 @app.post("/api/clear")
-async def clear_chat() -> dict[str, str]:
-    """
-    Endpoint para vaciar el historial y empezar una conversación nueva.
-    """
-    global chat_session
-    if gemini_client:
-        chat_session = gemini_client.chats.create(model='gemini-2.5-flash')
-    return {"status": "Memoria reiniciada con éxito"}
+async def clear_chat():
+    global chat_history
+    chat_history = []
+    return {"status": "Memoria universal reiniciada"}
 
-# En FastAPI, definimos el verbo HTTP (post) y la ruta ("/api/chat").
-# response_model indica qué modelo de Pydantic usar para validar/serializar la respuesta.
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest) -> ChatResponse:
-    """
-    Endpoint principal para interactuar con el modelo de chat.
+    global chat_history
     
-    FastAPI inyecta la carga útil (payload) de la petición HTTP automáticamente en 
-    el parámetro 'request', validando el JSON recibido contra el esquema 'ChatRequest'.
-    """
-    if not gemini_client:
+    model_id = request.model
+    user_msg = request.message
+    
+    # Determinar qué proveedor usar basándose en el ID del modelo
+    provider = ""
+    if model_id.startswith("gemini"):
+        provider = "gemini"
+    elif model_id.startswith("gpt"):
+        provider = "openai"
+    elif "llama" in model_id or "mixtral" in model_id:
+        provider = "groq"
+    
+    if not clients.get(provider):
         raise HTTPException(
-            status_code=500, 
-            detail="El servidor no tiene configurada la clave de la API de Gemini."
+            status_code=400, 
+            detail=f"No tienes configurada la API Key para el proveedor '{provider}'."
         )
 
+    # Añadir mensaje del usuario al historial
+    chat_history.append({"role": "user", "content": user_msg})
+
     try:
-        # Hacemos la petición a Google Gemini usando la sesión con memoria
-        response = chat_session.send_message(request.message)
+        reply_text = ""
         
-        reply_text = response.text if response.text else "Lo siento, no generé ninguna respuesta válida."
-        return ChatResponse(response=reply_text)
+        # --- Lógica por Proveedor ---
         
-    except errors.APIError as e:
-        raise HTTPException(status_code=502, detail=f"Error en la API de Gemini: {str(e)}")
+        if provider == "gemini":
+            # Adaptar historial a formato Gemini
+            gemini_history = []
+            for m in chat_history[:-1]: # Todo menos el último que enviamos ahora
+                role = "user" if m["role"] == "user" else "model"
+                gemini_history.append({"role": role, "parts": [{"text": m["content"]}]})
+            
+            # Crear sesión temporal con historial y enviar
+            session = clients["gemini"].chats.create(model=model_id, history=gemini_history)
+            response = session.send_message(user_msg)
+            reply_text = response.text
+
+        elif provider == "openai":
+            # Formato estándar de OpenAI
+            response = clients["openai"].chat.completions.create(
+                model=model_id,
+                messages=chat_history
+            )
+            reply_text = response.choices[0].message.content
+
+        elif provider == "groq":
+            # Formato estándar de Groq (similar a OpenAI)
+            response = clients["groq"].chat.completions.create(
+                model=model_id,
+                messages=chat_history
+            )
+            reply_text = response.choices[0].message.content
+
+        if not reply_text:
+            reply_text = "El modelo no devolvió una respuesta válida."
+
+        # Guardar respuesta en el historial universal
+        chat_history.append({"role": "assistant", "content": reply_text})
+        
+        return ChatResponse(response=reply_text, provider=provider)
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
+        # Limpiamos el último mensaje de usuario del historial si ha fallado para no corromper la memoria
+        chat_history.pop()
+        
+        error_str = str(e).lower()
+        detail = f"Error: {str(e)}"
+        
+        # Mapeo humano de errores de cuota (429)
+        if "429" in error_str or "quota" in error_str or "limit" in error_str:
+            detail = "⚠️ Has agotado los tokens o la cuota en este modelo. Prueba a seleccionar otro proveedor en el panel lateral."
+        
+        raise HTTPException(status_code=502, detail=detail)
