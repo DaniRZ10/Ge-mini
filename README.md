@@ -1,4 +1,4 @@
-# Ge-mini 💠 — PROYECTO ANTIGRAVITY
+# Ge-mini 💠
 
 Ge-mini es una interfaz de chat inteligente, minimalista y de alto rendimiento que permite interactuar con múltiples modelos de IA (Google Gemini y Groq/Llama) desde una única plataforma unificada.
 
@@ -62,4 +62,4 @@ Ge-mini/
 - **Markdown:** Marked.js para el renderizado de respuestas.
 
 ---
-*Desarrollado con ❤️ para el proyecto Antigravity.*
+*Desarrollado con ❤️ para el proyecto Ge-mini.*
