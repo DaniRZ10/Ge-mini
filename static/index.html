@@ -455,7 +455,14 @@
           body: JSON.stringify({ message: text }),
         });
 
-        if (!res.ok) throw new Error(`Error ${res.status}`);
+        if (!res.ok) {
+          let errorDetail = `Error ${res.status}`;
+          try {
+            const errData = await res.json();
+            if (errData.detail) errorDetail = errData.detail;
+          } catch (e) {}
+          throw new Error(errorDetail);
+        }
 
         const data = await res.json();
         hideTyping();

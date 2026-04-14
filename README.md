@@ -22,7 +22,7 @@ A medida que el proyecto avance, se irán implementando y actualizando las sigui
 
 - [x] Integración completa con el SDK de Google Gemini para procesar prompts reales.
 - [ ] Construcción del área de chat en el UI (lista de mensajes de usuario y respuestas del asistente).
-- [ ] Manejo del estado del chat (mantener historial de la conversación en sesión).
+- [x] Manejo del estado del chat (mantener historial de la conversación en sesión).
 - [ ] Efectos visuales de "escribiendo" y animaciones fluidas (Smooth Scrolling, Hover effects).
 - [ ] Interfaz completamente responsiva (optimizada para dispositivos móviles).
 - [ ] Botón para alternar entre Modo Oscuro y Modo Claro (si aplica a futuro).

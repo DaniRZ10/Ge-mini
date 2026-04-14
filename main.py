@@ -22,8 +22,11 @@ API_KEY = os.getenv("GEMINI_API_KEY")
 if not API_KEY:
     print("ADVERTENCIA: No se ha configurado 'GEMINI_API_KEY' en el entorno.")
     gemini_client = None
+    chat_session = None
 else:
     gemini_client = genai.Client(api_key=API_KEY)
+    # Inicializamos una sesión global de chat para mantener el historial (memoria)
+    chat_session = gemini_client.chats.create(model='gemini-2.5-flash')
 
 # ──────────────────────────────────────────────
 # 1. Inicialización de la aplicación
@@ -79,6 +82,15 @@ async def root() -> dict[str, str]:
     """
     return {"status": "Ge-mini backend is alive 🚀"}
 
+@app.post("/api/clear")
+async def clear_chat() -> dict[str, str]:
+    """
+    Endpoint para vaciar el historial y empezar una conversación nueva.
+    """
+    global chat_session
+    if gemini_client:
+        chat_session = gemini_client.chats.create(model='gemini-2.5-flash')
+    return {"status": "Memoria reiniciada con éxito"}
 
 # En FastAPI, definimos el verbo HTTP (post) y la ruta ("/api/chat").
 # response_model indica qué modelo de Pydantic usar para validar/serializar la respuesta.
@@ -97,11 +109,8 @@ async def chat(request: ChatRequest) -> ChatResponse:
         )
 
     try:
-        # Hacemos la petición a Google Gemini
-        response = gemini_client.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=request.message,
-        )
+        # Hacemos la petición a Google Gemini usando la sesión con memoria
+        response = chat_session.send_message(request.message)
         
         reply_text = response.text if response.text else "Lo siento, no generé ninguna respuesta válida."
         return ChatResponse(response=reply_text)
