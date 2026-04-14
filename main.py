@@ -1,8 +1,9 @@
 """
-Ge-mini — Backend Multimodelo (FastAPI)
+Ge-mini — Proyecto Antigravity 💠
 =====================================
-Soporta Google Gemini, OpenAI GPT y Groq (Llama/Mixtral).
-Gestiona una memoria de conversación unificada.
+Servidor FastAPI para una interfaz de chat multimodelo.
+Soporta Google Gemini y Groq (familia Llama).
+Mantiene un historial de conversación unificado en memoria RAM.
 """
 
 from fastapi import FastAPI, HTTPException
@@ -14,7 +15,6 @@ from dotenv import load_dotenv
 # SDKs de los proveedores
 from google import genai
 from google.genai import errors as gemini_errors
-from openai import OpenAI, OpenAIError
 from groq import Groq, GroqError
 
 # Cargar configuración
@@ -58,12 +58,17 @@ async def root():
 
 @app.post("/api/clear")
 async def clear_chat():
+    """Reinicia el historial de conversación global."""
     global chat_history
     chat_history = []
     return {"status": "Memoria universal reiniciada"}
 
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest) -> ChatResponse:
+    """
+    Recibe el mensaje del usuario, selecciona el modelo correspondiente
+    y devuelve la respuesta de la IA manteniendo la memoria.
+    """
     global chat_history
     
     model_id = request.model
@@ -73,8 +78,6 @@ async def chat(request: ChatRequest) -> ChatResponse:
     provider = ""
     if model_id.startswith("gemini"):
         provider = "gemini"
-    elif model_id.startswith("gpt"):
-        provider = "openai"
     elif "llama" in model_id or "mixtral" in model_id:
         provider = "groq"
     
@@ -105,7 +108,7 @@ async def chat(request: ChatRequest) -> ChatResponse:
             reply_text = response.text
 
         elif provider == "groq":
-            # Formato estándar de Groq (similar a OpenAI)
+            # Formato estándar de Groq
             response = clients["groq"].chat.completions.create(
                 model=model_id,
                 messages=chat_history
@@ -121,14 +124,15 @@ async def chat(request: ChatRequest) -> ChatResponse:
         return ChatResponse(response=reply_text, provider=provider)
 
     except Exception as e:
-        # Limpiamos el último mensaje de usuario del historial si ha fallado para no corromper la memoria
-        chat_history.pop()
+        # Revertimos el historial en caso de error
+        if chat_history and chat_history[-1]["role"] == "user":
+            chat_history.pop()
         
         error_str = str(e).lower()
         detail = f"Error: {str(e)}"
         
-        # Mapeo humano de errores de cuota (429)
-        if "429" in error_str or "quota" in error_str or "limit" in error_str:
-            detail = "⚠️ Has agotado los tokens o la cuota en este modelo. Prueba a seleccionar otro proveedor en el panel lateral."
+        # Mapeo de errores de cuota (Rate limits)
+        if any(kw in error_str for kw in ["429", "quota", "limit", "exhausted"]):
+            detail = "⚠️ Cuota agotada en este modelo. Prueba a cambiar de proveedor en el panel lateral."
         
         raise HTTPException(status_code=502, detail=detail)

@@ -1,49 +1,65 @@
-# Ge-mini
+# Ge-mini 💠 — PROYECTO ANTIGRAVITY
 
-Ge-mini es un clon ligero inspirado en ChatGPT, desarrollado con un backend moderno en Python y una interfaz frontend responsiva e intuitiva con diseño en modo oscuro (Dark Mode). Su objetivo es proporcionar una experiencia de chat rápida, enlazando directamente con los modelos de lenguaje de Google Gemini.
+Ge-mini es una interfaz de chat inteligente, minimalista y de alto rendimiento que permite interactuar con múltiples modelos de IA (Google Gemini y Groq/Llama) desde una única plataforma unificada.
 
-## 🚀 Tecnologías Utilizadas
+![Thumbnail](https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=1000)
 
-- **Backend:** FastAPI (Python), Uvicorn.
-- **Inteligencia Artificial:** Google Gemini SDK.
-- **Frontend:** HTML5, CSS3 (Grid/Flexbox) y Vanilla JavaScript.
-- **Control de Versiones:** Git y GitHub.
+## ✨ Características Principales
 
-## ⚙️ Funcionamiento Actual
+- **🤖 Multimodelo:** Selector dinámico para cambiar entre Gemini 2.0/2.5 y Llama 3.3/3.1 en tiempo real.
+- **🧠 Memoria Unificada:** Cambia de modelo a mitad de una conversación sin perder el contexto. La memoria se mantiene compartida entre todos los proveedores.
+- **🌓 Dual Theme:** Soporte completo para Modo Oscuro (Premium) y Modo Claro con persistencia en el navegador.
+- **🎨 Estética Refinada:** Interfaz inspirada en las mejores prácticas de UI/UX modernas, con transiciones suaves y Markdown de alta fidelidad.
+- **⚡ Respuesta Instantánea:** Optimización de latencia y gestión inteligente de indicadores de escritura.
+- **🛠 Gestión de Cuotas:** Detección automática de errores de límite de tokens con mensajes amigables para el usuario.
 
-Hasta el momento, el proyecto cuenta con la estructura fundamental:
-- **FastAPI:** Configurado con un endpoint de prueba en `main.py`.
-- **Frontend:** Estructura básica de la interfaz en `static/index.html`.
-- **Servidor:** Configuración de archivos estáticos y entorno virtual (`.venv`) listos y excluidos del control de versiones.
+## 🚀 Instalación Rápida
 
-## 📌 Funcionalidades Deseadas (Roadmap)
+1. **Clonar el repositorio:**
+   ```bash
+   git clone https://github.com/DaniRZ10/Ge-mini.git
+   cd Ge-mini
+   ```
 
-A medida que el proyecto avance, se irán implementando y actualizando las siguientes funcionalidades:
-
-- [x] Integración completa con el SDK de Google Gemini para procesar prompts reales.
-- [ ] Construcción del área de chat en el UI (lista de mensajes de usuario y respuestas del asistente).
-- [x] Manejo del estado del chat (mantener historial de la conversación en sesión).
-- [ ] Efectos visuales de "escribiendo" y animaciones fluidas (Smooth Scrolling, Hover effects).
-- [ ] Interfaz completamente responsiva (optimizada para dispositivos móviles).
-- [ ] Botón para alternar entre Modo Oscuro y Modo Claro (si aplica a futuro).
-- [ ] Soporte para visualización de código en Markdown dentro de las respuestas de Gemini.
-
-## 🛠️ Cómo ejecutar localmente
-
-1. Clona el repositorio.
-2. Crea y activa tu entorno virtual:
+2. **Crear entorno virtual e instalar dependencias:**
    ```bash
    python -m venv .venv
-   .venv\Scripts\activate
-   ```
-3. Instala las dependencias:
-   ```bash
+   source .venv/bin/activate  # En Windows: .venv\Scripts\activate
    pip install -r requirements.txt
    ```
-4. Levanta el servidor con Uvicorn:
+
+3. **Configurar variables de entorno (`.env`):**
+   Crea un archivo `.env` en la raíz con tus claves de API:
+   ```env
+   GEMINI_API_KEY=tu_clave_aqui
+   GROQ_API_KEY=tu_clave_aqui
+   ```
+
+4. **Lanzar el servidor:**
    ```bash
    uvicorn main:app --reload
    ```
 
+5. **Acceder:**
+   Abre [http://127.0.0.1:8000/static/index.html](http://127.0.0.1:8000/static/index.html) en tu navegador.
+
+## 📂 Estructura del Proyecto
+
+```text
+Ge-mini/
+├── static/
+│   └── index.html    # Interfaz SPA (HTML5, CSS3, JS Vanilla)
+├── main.py           # Servidor FastAPI y Lógica Multimodelo
+├── requirements.txt  # Dependencias del proyecto
+└── .env              # Configuración secreta (no subir a git)
+```
+
+## 🛠 Tecnologías Utilizadas
+
+- **Backend:** FastAPI (Python 3.10+)
+- **Frontend:** HTML5, CSS3 Variables, JavaScript Vanilla.
+- **IA:** Google GenAI SDK, Groq SDK.
+- **Markdown:** Marked.js para el renderizado de respuestas.
+
 ---
-*Este documento se irá actualizando activamente conforme se desarrollen nuevas características.*
+*Desarrollado con ❤️ para el proyecto Antigravity.*

@@ -285,7 +285,7 @@
       padding: 14px 18px;
       border-radius: 18px;
       max-width: 85%;
-      white-space: pre-wrap; /* SOLUCIÓN: El Enter ahora se ve como línea nueva en HTML */
+      white-space: pre-wrap; /* Mantiene saltos de línea y espacios */
     }
 
     .message.ai {
@@ -546,7 +546,7 @@
         content.classList.add("markdown-body");
         content.innerHTML = marked.parse(text);
       } else {
-        // En el user message, textContent respetará los \n gracias a we-space: pre-wrap en CSS
+        // En el user message, textContent respetará los saltos de línea gracias a white-space: pre-wrap
         content.textContent = text;
       }
 
