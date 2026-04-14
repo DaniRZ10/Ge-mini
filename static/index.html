@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236366f1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'/%3E%3C/svg%3E" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236366f1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 21c0-5-1-10-8-10s-5-3-5-5a4 4 0 118 0M12 21c0-5 1-10 8-10s 5-3 5-5a4 4 0 10-8 0'/%3E%3C/svg%3E" />
 
   <style>
     /* ═══════════════════════════════════════════
@@ -462,7 +462,7 @@
     <main id="chat-view">
       <header id="chat-header">
         <div style="display: flex; align-items: center;">
-          <svg class="logo-dot" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          <svg class="logo-dot" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21c0-5-1-10-8-10s-5-3-5-5a4 4 0 118 0M12 21c0-5 1-10 8-10s 5-3 5-5a4 4 0 10-8 0"/></svg>
           Ge-mini
         </div>
         <button id="theme-toggle" title="Cambiar tema">
@@ -476,7 +476,7 @@
       <section id="messages-wrapper">
         <div id="messages" aria-live="polite">
           <div id="empty-state">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21c0-5-1-10-8-10s-5-3-5-5a4 4 0 118 0M12 21c0-5 1-10 8-10s 5-3 5-5a4 4 0 10-8 0"/></svg>
             <h2>¿En qué te puedo ayudar?</h2>
           </div>
         </div>
@@ -540,7 +540,7 @@
       if (role === "ai") {
         const label = document.createElement("div");
         label.classList.add("label");
-        label.innerHTML = `<svg style="width:12px; height:12px; margin-right:4px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg> Ge-mini`;
+        label.innerHTML = `<svg style="width:12px; height:12px; margin-right:4px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21c0-5-1-10-8-10s-5-3-5-5a4 4 0 118 0M12 21c0-5 1-10 8-10s 5-3 5-5a4 4 0 10-8 0"/></svg> Ge-mini`;
         bubble.appendChild(label);
         
         content.classList.add("markdown-body");
@@ -562,7 +562,7 @@
       
       const label = document.createElement("div");
       label.classList.add("label");
-      label.innerHTML = `<svg style="width:12px; height:12px; margin-right:4px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg> Pensando...`;
+      label.innerHTML = `<svg style="width:12px; height:12px; margin-right:4px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21c0-5-1-10-8-10s-5-3-5-5a4 4 0 118 0M12 21c0-5 1-10 8-10s 5-3 5-5a4 4 0 10-8 0"/></svg> Pensando...`;
       
       const dots = document.createElement("div");
       dots.classList.add("typing-indicator");
