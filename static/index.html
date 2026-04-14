@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
   <style>
     /* ═══════════════════════════════════════════
@@ -156,6 +157,55 @@
 
     .message.ai .label {
       color: var(--accent);
+    }
+
+    /* ── Estilos de Markdown ── */
+    .markdown-body {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .markdown-body p {
+      line-height: 1.6;
+    }
+
+    .markdown-body strong {
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .markdown-body ul, .markdown-body ol {
+      padding-left: 20px;
+      margin: 4px 0;
+    }
+
+    .markdown-body li {
+      margin-bottom: 4px;
+    }
+
+    .markdown-body code {
+      background: rgba(0, 0, 0, 0.4);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+      font-size: 0.9em;
+      color: var(--success);
+    }
+
+    .markdown-body pre {
+      background: #0b0b13; /* Un fondo negro elegante */
+      padding: 14px;
+      border-radius: 8px;
+      overflow-x: auto;
+      border: 1px solid var(--border-subtle);
+      margin-top: 4px;
+    }
+
+    .markdown-body pre code {
+      background: none;
+      padding: 0;
+      color: #e8e8f0; /* Color primario claro para el código */
     }
 
     @keyframes msg-in {
@@ -354,8 +404,14 @@
       label.classList.add("label");
       label.textContent = role === "user" ? "Tú" : "Ge-mini";
 
-      const body = document.createElement("p");
-      body.textContent = text;
+      const body = document.createElement("div");
+      
+      if (role === "ai") {
+        body.classList.add("markdown-body");
+        body.innerHTML = marked.parse(text);
+      } else {
+        body.textContent = text;
+      }
 
       bubble.appendChild(label);
       bubble.appendChild(body);
