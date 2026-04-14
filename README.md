@@ -2,7 +2,7 @@
 
 Ge-mini es una interfaz de chat inteligente, minimalista y de alto rendimiento que permite interactuar con múltiples modelos de IA (Google Gemini y Groq/Llama) desde una única plataforma unificada.
 
-![Thumbnail](https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=1000)
+![Thumbnail](screenshot.png)
 
 ## ✨ Características Principales
 
