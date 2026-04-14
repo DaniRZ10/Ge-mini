@@ -270,7 +270,7 @@
       width: 100%;
       max-width: 760px;
       display: flex;
-      align-items: flex-end;
+      align-items: center; /* Alineado al centro verticalmente */
       gap: 12px;
       background: var(--bg-secondary);
       border: 1px solid var(--border-subtle);
@@ -294,23 +294,23 @@
       font-size: 0.95rem;
       outline: none;
       resize: none;
-      max-height: 200px; /* Crece hasta este límite */
+      max-height: 200px;
       line-height: 1.5;
-      padding: 4px 0;
+      padding: 12px 0; /* Padding equilibrado arriba y abajo */
     }
     #user-input::placeholder { color: #64687a; }
 
     #send-btn {
-      width: 38px; height: 38px;
-      border: none; border-radius: 10px;
-      background: var(--text-primary); color: var(--bg-secondary);
-      font-size: 1.1rem;
+      width: 48px; height: 48px;
+      border: none; border-radius: var(--radius);
+      background: var(--accent); color: #fff;
+      font-size: 1.2rem;
       cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       transition: background var(--transition), transform 0.1s;
       flex-shrink: 0;
     }
-    #send-btn:hover { background: #fff; transform: scale(1.05); }
+    #send-btn:hover { background: var(--accent-hover); transform: scale(1.05); }
     #send-btn:active { transform: scale(0.95); }
     #send-btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
 
@@ -364,7 +364,7 @@
       <div id="input-container">
         <form id="input-area" autocomplete="off">
           <textarea id="user-input" rows="1" placeholder="Habla con Ge-mini..." autofocus></textarea>
-          <button type="submit" id="send-btn" aria-label="Enviar">↑</button>
+          <button type="submit" id="send-btn" aria-label="Enviar">➤</button>
         </form>
       </div>
     </main>
