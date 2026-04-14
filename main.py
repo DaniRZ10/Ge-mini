@@ -30,9 +30,6 @@ clients = {
 if os.getenv("GEMINI_API_KEY"):
     clients["gemini"] = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
-if os.getenv("OPENAI_API_KEY"):
-    clients["openai"] = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
 if os.getenv("GROQ_API_KEY"):
     clients["groq"] = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
@@ -106,14 +103,6 @@ async def chat(request: ChatRequest) -> ChatResponse:
             session = clients["gemini"].chats.create(model=model_id, history=gemini_history)
             response = session.send_message(user_msg)
             reply_text = response.text
-
-        elif provider == "openai":
-            # Formato estándar de OpenAI
-            response = clients["openai"].chat.completions.create(
-                model=model_id,
-                messages=chat_history
-            )
-            reply_text = response.choices[0].message.content
 
         elif provider == "groq":
             # Formato estándar de Groq (similar a OpenAI)
