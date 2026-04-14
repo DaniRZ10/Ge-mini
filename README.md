@@ -20,7 +20,7 @@ Hasta el momento, el proyecto cuenta con la estructura fundamental:
 
 A medida que el proyecto avance, se irán implementando y actualizando las siguientes funcionalidades:
 
-- [ ] Integración completa con el SDK de Google Gemini para procesar prompts reales.
+- [x] Integración completa con el SDK de Google Gemini para procesar prompts reales.
 - [ ] Construcción del área de chat en el UI (lista de mensajes de usuario y respuestas del asistente).
 - [ ] Manejo del estado del chat (mantener historial de la conversación en sesión).
 - [ ] Efectos visuales de "escribiendo" y animaciones fluidas (Smooth Scrolling, Hover effects).

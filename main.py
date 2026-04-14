@@ -6,9 +6,24 @@ de archivos estáticos para la interfaz de usuario y define los
 endpoints de la API para procesar los mensajes del chat.
 """
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles  # Utilizado para servir archivos estáticos como HTML, CSS y JS
 from pydantic import BaseModel  # Utilizado para la validación y serialización de datos
+import os
+from dotenv import load_dotenv
+from google import genai
+from google.genai import errors
+
+# Cargar variables de entorno desde el archivo .env
+load_dotenv()
+
+# Cliente de Gemini
+API_KEY = os.getenv("GEMINI_API_KEY")
+if not API_KEY:
+    print("ADVERTENCIA: No se ha configurado 'GEMINI_API_KEY' en el entorno.")
+    gemini_client = None
+else:
+    gemini_client = genai.Client(api_key=API_KEY)
 
 # ──────────────────────────────────────────────
 # 1. Inicialización de la aplicación
@@ -75,8 +90,23 @@ async def chat(request: ChatRequest) -> ChatResponse:
     FastAPI inyecta la carga útil (payload) de la petición HTTP automáticamente en 
     el parámetro 'request', validando el JSON recibido contra el esquema 'ChatRequest'.
     """
-    # TODO: Fase 2 — Integrar el SDK google.generativeai para generar respuestas reales.
-    # Por ahora se retorna una respuesta simulada que sirve de eco.
-    return ChatResponse(
-        response=f"[Eco de prueba] Recibí tu mensaje: «{request.message}»"
-    )
+    if not gemini_client:
+        raise HTTPException(
+            status_code=500, 
+            detail="El servidor no tiene configurada la clave de la API de Gemini."
+        )
+
+    try:
+        # Hacemos la petición a Google Gemini
+        response = gemini_client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=request.message,
+        )
+        
+        reply_text = response.text if response.text else "Lo siento, no generé ninguna respuesta válida."
+        return ChatResponse(response=reply_text)
+        
+    except errors.APIError as e:
+        raise HTTPException(status_code=502, detail=f"Error en la API de Gemini: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
