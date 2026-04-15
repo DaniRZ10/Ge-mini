@@ -23,7 +23,6 @@ load_dotenv()
 # Inicialización de Clientes
 clients = {
     "gemini": None,
-    "openai": None,
     "groq": None
 }
 
