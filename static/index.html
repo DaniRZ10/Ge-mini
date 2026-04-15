@@ -143,11 +143,18 @@
       margin-top: 8px;
     }
 
+    .history-list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
     .history-item {
       padding: 10px 12px;
       border-radius: 8px;
-      margin-bottom: 6px; /* Espacio entre conversaciones */
-      background: rgba(255, 255, 255, 0.03); /* Fondo sutil para distinguir */
+      background: rgba(255, 255, 255, 0.03);
       font-size: 0.9rem;
       color: var(--text-secondary);
       border: 1px solid transparent;
@@ -156,11 +163,52 @@
       overflow: hidden;
       text-overflow: ellipsis;
       transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
     }
+
     .history-item:hover {
       background: var(--bg-input);
       color: var(--text-primary);
       border-color: var(--border-subtle);
+    }
+
+    .history-item.active {
+      background: var(--accent-glow);
+      color: var(--text-primary);
+      border-color: var(--accent);
+    }
+
+    .history-item .title {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+    }
+
+    .history-item .delete-btn {
+      display: none;
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 2px;
+      border-radius: 4px;
+      line-height: 1;
+      font-size: 0.85rem;
+      flex-shrink: 0;
+      transition: var(--transition);
+    }
+
+    .history-item:hover .delete-btn {
+      display: flex;
+    }
+
+    .history-item .delete-btn:hover {
+      color: var(--danger);
+      background: rgba(239, 68, 68, 0.1);
     }
 
     /* ── Model Selector Styling ── */
@@ -420,6 +468,15 @@
     .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
     @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-5px); } }
 
+    /* ── Historial vacío ── */
+    .history-empty {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      opacity: 0.5;
+      text-align: center;
+      padding: 12px 0;
+    }
+
     /* ── RESPONSIVE ── */
     @media (max-width: 768px) {
       #sidebar { display: none; } /* En móvil se ocultaría de momento por simpleza */
@@ -450,11 +507,9 @@
         </optgroup>
       </select>
 
-      <div class="sidebar-section-title">Historial (Demo)</div>
-      <div class="history-list">
-        <div class="history-item">Consultas de números primos</div>
-        <div class="history-item">El tiempo en Sevilla</div>
-        <div class="history-item">Ejemplo estático 3</div>
+      <div class="sidebar-section-title">Historial</div>
+      <div class="history-list" id="history-list">
+        <!-- Se llena dinámicamente desde la BD -->
       </div>
     </aside>
 
@@ -486,7 +541,7 @@
       <div id="input-container">
         <form id="input-area" autocomplete="off">
           <textarea id="user-input" rows="1" placeholder="Habla con Ge-mini..." autofocus></textarea>
-          <button type="submit" id="send-btn" aria-label="Enviar">➤</button>
+          <button type="submit" id="send-btn" aria-label="Enviar">&#10148;</button>
         </form>
       </div>
     </main>
@@ -494,6 +549,7 @@
   </div>
 
   <script>
+    // ── Referencias al DOM ──
     const messagesWrapper = document.getElementById("messages-wrapper");
     const messagesEl = document.getElementById("messages");
     const emptyState = document.getElementById("empty-state");
@@ -504,6 +560,10 @@
     const modelSelector = document.getElementById("model-selector");
     const themeToggle = document.getElementById("theme-toggle");
     const themeIcon   = document.getElementById("theme-icon");
+    const historyList = document.getElementById("history-list");
+
+    // ── Estado de la aplicación ──
+    let currentConversationId = null;
 
     // ── Lógica de Modo Claro/Oscuro ──
     function initTheme() {
@@ -528,11 +588,102 @@
 
     initTheme();
 
-    function addMessage(role, text) {
+    // ══════════════════════════════════════════════
+    //  HISTORIAL — Carga, renderizado y navegación
+    // ══════════════════════════════════════════════
+
+    async function loadConversations() {
+      try {
+        const res = await fetch("/api/conversations");
+        const conversations = await res.json();
+        renderHistoryList(conversations);
+      } catch (e) {
+        console.error("Error cargando historial:", e);
+      }
+    }
+
+    function renderHistoryList(conversations) {
+      historyList.innerHTML = "";
+
+      if (conversations.length === 0) {
+        historyList.innerHTML = '<div class="history-empty">Sin conversaciones</div>';
+        return;
+      }
+
+      conversations.forEach(conv => {
+        const item = document.createElement("div");
+        item.classList.add("history-item");
+        if (conv.id === currentConversationId) {
+          item.classList.add("active");
+        }
+
+        const titleSpan = document.createElement("span");
+        titleSpan.classList.add("title");
+        titleSpan.textContent = conv.title;
+        titleSpan.addEventListener("click", () => loadConversation(conv.id));
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.classList.add("delete-btn");
+        deleteBtn.innerHTML = "&#10005;";
+        deleteBtn.title = "Eliminar";
+        deleteBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          deleteConversation(conv.id);
+        });
+
+        item.appendChild(titleSpan);
+        item.appendChild(deleteBtn);
+        historyList.appendChild(item);
+      });
+    }
+
+    async function loadConversation(conversationId) {
+      currentConversationId = conversationId;
+
+      // Limpiar mensajes actuales
+      messagesEl.innerHTML = "";
+      if (emptyState) emptyState.style.display = "none";
+
+      try {
+        const res = await fetch(`/api/conversations/${conversationId}/messages`);
+        const messages = await res.json();
+
+        messages.forEach(msg => {
+          addMessage(msg.role === "user" ? "user" : "ai", msg.content, false);
+        });
+
+        scrollToBottom();
+        await loadConversations(); // Actualizar sidebar para marcar el activo
+      } catch (e) {
+        console.error("Error cargando conversación:", e);
+      }
+    }
+
+    async function deleteConversation(conversationId) {
+      try {
+        await fetch(`/api/conversations/${conversationId}`, { method: "DELETE" });
+
+        // Si borramos la conversación activa, resetear vista
+        if (conversationId === currentConversationId) {
+          startNewChat();
+        }
+
+        await loadConversations();
+      } catch (e) {
+        console.error("Error borrando conversación:", e);
+      }
+    }
+
+    // ══════════════════════════════════════════════
+    //  MENSAJES — Renderizado
+    // ══════════════════════════════════════════════
+
+    function addMessage(role, text, animate = true) {
       if (emptyState) emptyState.style.display = 'none';
 
       const bubble = document.createElement("div");
       bubble.classList.add("message", role);
+      if (!animate) bubble.style.animation = "none";
 
       const content = document.createElement("div");
       content.classList.add("content");
@@ -552,7 +703,7 @@
 
       bubble.appendChild(content);
       messagesEl.appendChild(bubble);
-      scrollToBottom();
+      if (animate) scrollToBottom();
     }
 
     function showTyping() {
@@ -589,6 +740,10 @@
       }, 50);
     }
 
+    // ══════════════════════════════════════════════
+    //  CHAT — Envío y recepción
+    // ══════════════════════════════════════════════
+
     async function handleSubmit() {
       const text = input.value.trim();
       if (!text) return;
@@ -609,7 +764,8 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ 
             message: text,
-            model: modelSelector.value 
+            model: modelSelector.value,
+            conversation_id: currentConversationId
           }),
         });
 
@@ -625,27 +781,33 @@
         const data = await res.json();
         hideTyping();
         addMessage("ai", data.response);
+
+        // Actualizar el conversation_id (puede haberse creado uno nuevo)
+        currentConversationId = data.conversation_id;
+
+        // Refrescar sidebar
+        await loadConversations();
+
       } catch (err) {
         hideTyping();
-        addMessage("ai", `⚠️ **Error de conexión:** \n${err.message}`);
+        addMessage("ai", `**Error:** ${err.message}`);
       } finally {
         sendBtn.disabled = false;
       }
     }
 
-    // ── Limpiar Memoria (Nuevo Chat) ──
-    newChatBtn.addEventListener("click", async () => {
-      try {
-        await fetch("/api/clear", { method: "POST" });
-        messagesEl.innerHTML = ""; // Vaciamos pantalla
-        if(emptyState) {
-          emptyState.style.display = 'flex';
-          messagesEl.appendChild(emptyState);
-        }
-      } catch(e) {
-         alert("Ocurrió un error al limpiar el chat.");
+    // ── Nuevo Chat ──
+    function startNewChat() {
+      currentConversationId = null;
+      messagesEl.innerHTML = "";
+      if (emptyState) {
+        emptyState.style.display = "flex";
+        messagesEl.appendChild(emptyState);
       }
-    });
+      loadConversations(); // Actualizar sidebar para quitar active
+    }
+
+    newChatBtn.addEventListener("click", () => startNewChat());
 
     form.addEventListener("submit", (e) => {
       e.preventDefault();
@@ -665,6 +827,9 @@
       input.style.height = "auto";
       input.style.height = Math.min(input.scrollHeight, 200) + "px";
     });
+
+    // ── Carga inicial del historial ──
+    loadConversations();
   </script>
 </body>
 </html>
