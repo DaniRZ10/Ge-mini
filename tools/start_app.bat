@@ -7,8 +7,8 @@ echo ==========================================
 :: Abrir el navegador en la URL local
 start http://127.0.0.1:8000/static/index.html
 
-:: Volver a la raíz del proyecto para ejecutar uvicorn
-cd ..
+:: Ir a la raíz del proyecto (una carpeta arriba de donde está este script)
+cd /d "%~dp0.."
 
 :: Ejecutar el servidor usando el interprete del entono virtual
 echo Usando interprete: .venv\Scripts\python.exe

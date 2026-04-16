@@ -5,8 +5,8 @@ echo    Ejecutando Tests - Proyecto Ge-mini
 echo ==========================================
 echo.
 
-:: Volver a la raíz del proyecto para ejecutar pytest
-cd ..
+:: Ir a la raíz del proyecto (una carpeta arriba de donde está este script)
+cd /d "%~dp0.."
 
 :: Ejecutar tests usando el interprete del entorno virtual
 echo Usando interprete: .venv\Scripts\python.exe
