@@ -44,6 +44,13 @@ Ge-mini es una interfaz de chat inteligente, minimalista y de alto rendimiento q
 5. **Acceder:**
    Abre [http://127.0.0.1:8000/static/index.html](http://127.0.0.1:8000/static/index.html) en tu navegador.
 
+## 🧪 Pruebas (Testing)
+
+Para ejecutar los tests automatizados y asegurar que todo funciona:
+- **Windows:** Ejecuta `tools\run_tests.bat`.
+- **Manual (Terminal):** `.venv\Scripts\python.exe -m pytest`.
+
+
 ## 📂 Estructura del Proyecto
 
 ```text
