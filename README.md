@@ -37,8 +37,9 @@ Ge-mini es una interfaz de chat inteligente, minimalista y de alto rendimiento q
 
 4. **Lanzar el servidor:**
    ```bash
-   uvicorn main:app --reload
+   uvicorn app.main:app --reload
    ```
+   *También puedes usar el script automatizado en Windows: `scripts\start_app.bat`*
 
 5. **Acceder:**
    Abre [http://127.0.0.1:8000/static/index.html](http://127.0.0.1:8000/static/index.html) en tu navegador.
@@ -47,11 +48,14 @@ Ge-mini es una interfaz de chat inteligente, minimalista y de alto rendimiento q
 
 ```text
 Ge-mini/
+├── app/
+│   ├── main.py        # Servidor FastAPI y Lógica Multimodelo
+│   └── database.py    # Persistencia en SQLite
 ├── static/
-│   └── index.html    # Interfaz SPA (HTML5, CSS3, JS Vanilla)
-├── main.py           # Servidor FastAPI y Lógica Multimodelo
-├── requirements.txt  # Dependencias del proyecto
-└── .env              # Configuración secreta (no subir a git)
+│   └── index.html     # Interfaz SPA (HTML5, CSS3, JS Vanilla)
+├── scripts/           # Scripts de ejecución (.bat)
+├── requirements.txt   # Dependencias del proyecto
+└── .env               # Configuración secreta (no subir a git)
 ```
 
 ## 🛠 Tecnologías Utilizadas

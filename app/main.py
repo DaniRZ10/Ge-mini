@@ -19,7 +19,7 @@ from google.genai import errors as gemini_errors
 from groq import Groq, GroqError
 
 # Módulo de base de datos local
-import database as db
+from app import database as db
 
 # Cargar configuración
 load_dotenv()
@@ -62,6 +62,8 @@ app: FastAPI = FastAPI(
     lifespan=lifespan,
 )
 
+# Montar archivos estáticos (HTML/CSS/JS)
+# directory="static" funciona si ejecutamos uvicorn desde la raíz del proyecto
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 

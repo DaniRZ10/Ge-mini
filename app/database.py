@@ -7,7 +7,11 @@ import aiosqlite
 import uuid
 from datetime import datetime, timezone
 
-DB_PATH = "gemini_chat.db"
+import os
+
+# Ruta a la base de datos (se mantiene en la raíz del proyecto)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DB_PATH = os.path.join(BASE_DIR, "gemini_chat.db")
 
 
 async def init_db():
