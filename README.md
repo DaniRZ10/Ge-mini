@@ -2,7 +2,7 @@
 
 Ge-mini es una interfaz de chat inteligente, minimalista y de alto rendimiento que permite interactuar con múltiples modelos de IA (Google Gemini y Groq/Llama) desde una única plataforma unificada.
 
-![Thumbnail](screenshot.png)
+![Thumbnail](docs/screenshot.png)
 
 ## ✨ Características Principales
 
@@ -39,7 +39,7 @@ Ge-mini es una interfaz de chat inteligente, minimalista y de alto rendimiento q
    ```bash
    uvicorn app.main:app --reload
    ```
-   *También puedes usar el script automatizado en Windows: `scripts\start_app.bat`*
+   *También puedes usar el script automatizado en Windows: `tools\start_app.bat`*
 
 5. **Acceder:**
    Abre [http://127.0.0.1:8000/static/index.html](http://127.0.0.1:8000/static/index.html) en tu navegador.
@@ -48,14 +48,13 @@ Ge-mini es una interfaz de chat inteligente, minimalista y de alto rendimiento q
 
 ```text
 Ge-mini/
-├── app/
-│   ├── main.py        # Servidor FastAPI y Lógica Multimodelo
-│   └── database.py    # Persistencia en SQLite
-├── static/
-│   └── index.html     # Interfaz SPA (HTML5, CSS3, JS Vanilla)
-├── scripts/           # Scripts de ejecución (.bat)
+├── app/               # Lógica del Backend (Python)
+├── static/            # Frontend (HTML, CSS, JS)
+├── data/              # Base de datos SQLite
+├── docs/              # Capturas y documentación
+├── tools/             # Scripts de ejecución (.bat)
 ├── requirements.txt   # Dependencias del proyecto
-└── .env               # Configuración secreta (no subir a git)
+└── .env               # Configuración secreta
 ```
 
 ## 🛠 Tecnologías Utilizadas
