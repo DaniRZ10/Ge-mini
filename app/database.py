@@ -10,8 +10,10 @@ from datetime import datetime, timezone
 import os
 
 # Ruta a la base de datos (se mantiene en la carpeta data/)
+# Permite override mediante variable de entorno para tests
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DB_PATH = os.path.join(BASE_DIR, "data", "gemini_chat.db")
+DEFAULT_DB_PATH = os.path.join(BASE_DIR, "data", "gemini_chat.db")
+DB_PATH = os.getenv("DATABASE_URL", DEFAULT_DB_PATH)
 
 
 async def init_db():
