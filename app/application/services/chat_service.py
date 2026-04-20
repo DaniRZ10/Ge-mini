@@ -2,6 +2,7 @@ from typing import List, Optional
 from datetime import datetime, timezone
 import uuid
 
+from sqlalchemy.ext.asyncio import AsyncSession
 from ...domain.entities import Conversation, Message
 from ...infrastructure.database.repositories import SqlAlchemyConversationRepository, SqlAlchemyMessageRepository
 from ...infrastructure.ai.factory import AiProviderFactory
@@ -20,8 +21,22 @@ class ChatService:
         self.provider_factory = provider_factory
 
     async def start_chat(self, message_content: str, model_id: str, conversation_id: Optional[str] = None) -> Message:
+        # 1. Determinar proveedor e instanciar adaptador
+        provider_obj = self.provider_factory.get_provider(model_id)
+        provider_name = "gemini" if model_id.startswith("gemini") else "groq"
+
+        # 2. Preparación inicial: Obtener historial previo (vista de solo lectura, fuera de transacción)
+        history = []
+        if conversation_id:
+            history = await self.msg_repo.get_by_conversation(conversation_id)
+
+        # 3. Obtener respuesta de la IA (Llamada externa, FUERA de la transacción de DB)
+        # Pasamos el historial actual. El mensaje nuevo aún no está en la DB.
+        reply_content = await provider_obj.send_message(message_content, history, model_id)
+
+        # 4. Una vez tenemos la respuesta, abrimos transacción para guardar TODO de forma atómica
         async with self.session.begin():
-            # 1. Resolver o crear conversación
+            # 4.1 Resolver o crear conversación si es nueva
             if not conversation_id:
                 title = message_content[:50] + ("..." if len(message_content) > 50 else "")
                 new_conv = Conversation(
@@ -33,11 +48,7 @@ class ChatService:
                 await self.conv_repo.create(new_conv)
                 conversation_id = new_conv.id
 
-            # 2. Determinar proveedor e instanciar adaptador
-            provider_obj = self.provider_factory.get_provider(model_id)
-            provider_name = "gemini" if model_id.startswith("gemini") else "groq"
-
-            # 3. Guardar mensaje del usuario
+            # 4.2 Guardar mensaje del usuario
             user_msg = Message(
                 conversation_id=conversation_id,
                 role="user",
@@ -48,13 +59,7 @@ class ChatService:
             )
             await self.msg_repo.add(user_msg)
 
-            # 4. Obtener historial para contexto
-            history = await self.msg_repo.get_by_conversation(conversation_id)
-
-            # 5. Obtener respuesta de la IA
-            reply_content = await provider_obj.send_message(message_content, history[:-1], model_id)
-
-            # 6. Guardar respuesta del asistente
+            # 4.3 Guardar respuesta del asistente
             assistant_msg = Message(
                 conversation_id=conversation_id,
                 role="assistant",
@@ -65,7 +70,7 @@ class ChatService:
             )
             saved_reply = await self.msg_repo.add(assistant_msg)
             
-            # 7. Actualizar timestamp de la conversación
+            # 4.4 Actualizar timestamp de la conversación
             await self.conv_repo.touch(conversation_id)
 
             return saved_reply
