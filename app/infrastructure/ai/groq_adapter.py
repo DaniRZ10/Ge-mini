@@ -19,7 +19,8 @@ class GroqAdapter(AiProvider):
         
         response = self.client.chat.completions.create(
             model=model_id,
-            messages=messages
+            messages=messages,
+            temperature=0.7
         )
         
         reply_text = response.choices[0].message.content

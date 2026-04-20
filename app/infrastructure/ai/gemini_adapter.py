@@ -18,7 +18,10 @@ class GeminiAdapter(AiProvider):
         session = self.client.chats.create(
             model=model_id,
             history=gemini_history,
-            config={"system_instruction": self.system_prompt}
+            config={
+                "system_instruction": self.system_prompt,
+                "temperature": 0.7
+            }
         )
         response = session.send_message(message)
         return response.text
