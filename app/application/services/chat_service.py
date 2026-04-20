@@ -25,10 +25,11 @@ class ChatService:
         provider_obj = self.provider_factory.get_provider(model_id)
         provider_name = "gemini" if model_id.startswith("gemini") else "groq"
 
-        # 2. Preparación inicial: Obtener historial previo (vista de solo lectura, fuera de transacción)
+        # 2. Preparación inicial: Obtener historial previo (vista de solo lectura, fuera de transacción larga)
         history = []
         if conversation_id:
-            history = await self.msg_repo.get_by_conversation(conversation_id)
+            async with self.session.begin():
+                history = await self.msg_repo.get_by_conversation(conversation_id)
 
         # 3. Obtener respuesta de la IA (Llamada externa, FUERA de la transacción de DB)
         # Pasamos el historial actual. El mensaje nuevo aún no está en la DB.
