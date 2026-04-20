@@ -2,3 +2,8 @@ google-genai
 python-dotenv
 groq
 aiosqlite
+sqlalchemy>=2.0.0
+pydantic-settings
+greenlet
+fastapi
+uvicorn

@@ -51,24 +51,30 @@ Para ejecutar los tests automatizados y asegurar que todo funciona:
 - **Manual (Terminal):** `.venv\Scripts\python.exe -m pytest`.
 
 
-## 📂 Estructura del Proyecto
+## 📂 Estructura del Proyecto (Clean Architecture)
 
 ```text
 Ge-mini/
-├── app/               # Lógica del Backend (Python)
-├── static/            # Frontend (HTML, CSS, JS)
-├── data/              # Base de datos SQLite
-├── docs/              # Capturas y documentación
-├── tools/             # Scripts de ejecución (.bat)
-├── requirements.txt   # Dependencias del proyecto
-└── .env               # Configuración secreta
+├── app/
+│   ├── domain/         # Entidades puras e interfaces (Repository/Provider)
+│   ├── application/    # Casos de uso y lógica de orquestación (Servicios)
+│   ├── infrastructure/ # Implementaciones concretas (SQLAlchemy, AI Adapters)
+│   ├── api/            # Routers de FastAPI, Schemas (DTOs) y Dependencias
+│   └── main.py         # Punto de entrada de la aplicación
+├── static/             # Frontend (HTML, CSS, JS)
+├── data/               # Base de datos SQLite (gemini_chat.db)
+├── docs/               # Capturas y documentación
+├── tools/              # Scripts de ejecución (.bat)
+├── requirements.txt    # Dependencias del proyecto
+└── .env                # Configuración secreta
 ```
 
 ## 🛠 Tecnologías Utilizadas
 
-- **Backend:** FastAPI (Python 3.10+)
+- **Backend:** FastAPI (Python 3.10+) con Clean Architecture.
+- **ORM/Persistencia:** SQLAlchemy 2.0 (Async) + aiosqlite.
 - **Frontend:** HTML5, CSS3 Variables, JavaScript Vanilla.
-- **IA:** Google GenAI SDK, Groq SDK.
+- **IA:** Google GenAI SDK, Groq SDK (Patrón Strategy/Adapter).
 - **Markdown:** Marked.js para el renderizado de respuestas.
 
 ---
