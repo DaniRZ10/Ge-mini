@@ -501,12 +501,12 @@
       <div class="sidebar-section-title">Modelo de IA</div>
       <select id="model-selector">
         <optgroup label="Google Gemini">
-          <option value="gemini-2.0-flash" selected>Gemini 2.0 Flash</option>
+          <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
           <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
           <option value="gemini-flash-latest">Gemini 1.5 Flash</option>
         </optgroup>
         <optgroup label="Open Source (Groq)">
-          <option value="llama-3.3-70b-versatile">Llama 3.3 (70B)</option>
+          <option value="llama-3.3-70b-versatile" selected>Llama 3.3 (70B)</option>
           <option value="llama-3.1-8b-instant">Llama 3.1 (8B)</option>
         </optgroup>
       </select>
@@ -578,6 +578,13 @@
       }
     }
 
+    function initModel() {
+      const savedModel = localStorage.getItem("selectedModel");
+      if (savedModel) {
+        modelSelector.value = savedModel;
+      }
+    }
+
     function updateThemeIcon(isLight) {
       const sunPath = "M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z";
       const moonPath = "M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z";
@@ -590,7 +597,12 @@
       updateThemeIcon(isLight);
     });
 
+    modelSelector.addEventListener("change", () => {
+      localStorage.setItem("selectedModel", modelSelector.value);
+    });
+
     initTheme();
+    initModel();
 
     // ══════════════════════════════════════════════
     //  HISTORIAL — Carga, renderizado y navegación
