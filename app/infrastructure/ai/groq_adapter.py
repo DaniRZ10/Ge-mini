@@ -14,12 +14,13 @@ class GroqAdapter(AiProvider):
         for m in history:
             messages.append({"role": m.role, "content": m.content})
         
-        # El mensaje actual ya debería estar en el historial si seguimos la lógica del servicio,
-        # pero por si acaso nos aseguramos de que el último mensaje sea el del usuario.
-        # En el refactor actual, el servicio guardará el mensaje antes de llamar al provider.
+        # Añadir el mensaje actual del usuario
+        messages.append({"role": "user", "content": message})
         
         response = self.client.chat.completions.create(
             model=model_id,
             messages=messages
         )
-        return response.choices[0].message.content
+        
+        reply_text = response.choices[0].message.content
+        return reply_text if reply_text else "El modelo no devolvió una respuesta válida."
