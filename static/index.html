@@ -87,6 +87,10 @@
       background: #fff;
     }
 
+    body.light-mode #model-selector {
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234b5563' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    }
+
     /* Scrollbar minimalista global a webkit */
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -365,7 +369,7 @@
     /* ── ESTILOS MARKDOWN ── */
     .markdown-body { display: flex; flex-direction: column; gap: 12px; width: 100%; }
     .markdown-body p { line-height: 1.6; }
-    .markdown-body strong { color: #fff; font-weight: 600; }
+    .markdown-body strong { color: var(--text-primary); font-weight: 700; }
     .markdown-body ul, .markdown-body ol { padding-left: 20px; margin: 4px 0; }
     .markdown-body li { margin-bottom: 4px; }
     
