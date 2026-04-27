@@ -6,6 +6,7 @@ Servidor FastAPI refactorizado con Clean Architecture.
 
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Depends
+from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
 import os
 from dotenv import load_dotenv
@@ -50,7 +51,6 @@ async def list_conversations(
     repo: SqlAlchemyConversationRepository = Depends(get_conversation_repo)
 ):
     convs = await repo.list_all()
-    # Mapeo a esquema de salida (formateo de fechas a string como esperaba el frontend original)
     return [
         ConversationOut(
             id=c.id, 
@@ -90,7 +90,7 @@ async def delete_conversation(
             raise HTTPException(status_code=404, detail="Conversación no encontrada.")
     return {"status": "Conversación eliminada"}
 
-# --- Endpoint principal: Chat ---
+# --- Endpoints principales: Chat ---
 
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat(
@@ -111,10 +111,22 @@ async def chat(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        error_str = str(e).lower()
-        if any(kw in error_str for kw in ["429", "quota", "limit", "exhausted"]):
-            raise HTTPException(
-                status_code=502, 
-                detail="⚠️ Cuota agotada en este modelo. Prueba a cambiar de proveedor."
-            )
         raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")
+
+@app.post("/api/chat/stream")
+async def chat_stream(
+    request: ChatRequest,
+    service: ChatService = Depends(get_chat_service)
+):
+    """Endpoint de streaming para respuestas en tiempo real."""
+    try:
+        return StreamingResponse(
+            service.start_chat_stream(
+                message_content=request.message,
+                model_id=request.model,
+                conversation_id=request.conversation_id
+            ),
+            media_type="text/event-stream"
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error en streaming: {str(e)}")
