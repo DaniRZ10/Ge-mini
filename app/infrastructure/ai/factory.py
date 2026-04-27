@@ -1,6 +1,7 @@
 import os
 from .gemini_adapter import GeminiAdapter
 from .groq_adapter import GroqAdapter
+from .ollama_adapter import OllamaAdapter
 from ...domain.providers.base import AiProvider
 
 class AiProviderFactory:
@@ -10,6 +11,11 @@ class AiProviderFactory:
         self.groq_key = os.getenv("GROQ_API_KEY")
 
     def get_provider(self, model_id: str) -> AiProvider:
+        # Detectar modelos de Ollama (si contienen 'qwen', 'deepseek', 'gemma', 'phi' o son explícitamente locales)
+        local_models = ["qwen", "deepseek", "phi", "gemma", "llama3.1:8b", "codellama"]
+        if any(m in model_id.lower() for m in local_models) and "instant" not in model_id:
+            return OllamaAdapter(self.system_prompt)
+
         if model_id.startswith("gemini"):
             if not self.gemini_key:
                 raise ValueError("GEMINI_API_KEY no configurada.")
