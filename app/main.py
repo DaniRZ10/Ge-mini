@@ -119,14 +119,19 @@ async def chat_stream(
     service: ChatService = Depends(get_chat_service)
 ):
     """Endpoint de streaming para respuestas en tiempo real."""
+    # Si no hay ID, lo generamos aquí para poder enviarlo en el header
+    import uuid
+    conv_id = request.conversation_id or str(uuid.uuid4())
+    
     try:
         return StreamingResponse(
             service.start_chat_stream(
                 message_content=request.message,
                 model_id=request.model,
-                conversation_id=request.conversation_id
+                conversation_id=conv_id
             ),
-            media_type="text/event-stream"
+            media_type="text/event-stream",
+            headers={"X-Conversation-Id": conv_id}
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error en streaming: {str(e)}")

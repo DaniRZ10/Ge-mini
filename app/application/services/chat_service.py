@@ -56,7 +56,7 @@ class ChatService:
         # Primero enviamos el ID de conversación al frontend si es nueva
         # (Esto se manejará mejor en el endpoint, aquí solo devolvemos el texto)
         
-        async for chunk in await provider_obj.send_message_stream(message_content, history, model_id):
+        async for chunk in provider_obj.send_message_stream(message_content, history, model_id):
             full_reply += chunk
             yield chunk
 
