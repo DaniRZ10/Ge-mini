@@ -31,7 +31,26 @@ Hemos priorizado modelos altamente optimizados y cuantizados para maximizar el u
 Para solventar el cuello de botella de la CPU, se ha implementado un sistema de **Streaming de Texto**:
 *   Permite al desarrollador empezar a leer el código en **2-3 segundos**.
 *   Elimina la espera de bloqueo (45-60s) propia de la inferencia en CPU.
-*   Hace viable el uso de modelos locales en el flujo diario de trabajo.
+
+---
+
+## ⚖️ Ventajas y Desventajas de la IA Local
+### Modelos Pequeños (1B-3B) en Hardware de Consumo
+
+| Ventajas (Pros) | Desventajas (Contras) |
+| :--- | :--- |
+| **Privacidad Total**: El código nunca sale de la red local. | **Razonamiento Limitado**: Menor capacidad lógica en tareas abstractas. |
+| **Coste Cero**: Sin suscripciones ni pagos por token. | **Amnesia**: Ventanas de contexto más cortas que modelos Cloud. |
+| **Latencia Baja**: Respuestas inmediatas sin depender del servidor. | **Calor/Recursos**: Alto uso de CPU y calentamiento del equipo. |
+| **Acceso Offline**: Programación asistida sin necesidad de internet. | **Alucinaciones**: Mayor tendencia a inventar sintaxis en modelos <3B. |
+
+---
+
+## 🔄 Alternativas e Hibridación
+*   **Alternativa Local Superior**: Ampliación a 16GB/32GB RAM para usar modelos de **7B o 14B**.
+*   **Estrategia Híbrida**: 
+    *   **Local**: Tareas repetitivas, snippets y lógica simple.
+    *   **Cloud**: Refactorización compleja y diseño de arquitectura.
 
 ---
 
