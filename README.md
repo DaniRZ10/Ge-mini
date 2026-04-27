@@ -1,16 +1,16 @@
 # Ge-mini 💠
 
-Ge-mini es una interfaz de chat inteligente, minimalista y de alto rendimiento que permite interactuar con múltiples modelos de IA (Google Gemini y Groq/Llama) desde una única plataforma unificada.
+Ge-mini es una interfaz de chat inteligente, minimalista y de alto rendimiento que permite interactuar con múltiples modelos de IA (Google Gemini, Groq/Llama y **IA Local con Ollama**) desde una única plataforma unificada.
 
 ![Thumbnail](docs/screenshot.png)
 
 ## ✨ Características Principales
 
-- **🤖 Multimodelo:** Selector dinámico para cambiar entre Gemini 2.0/2.5 y Llama 3.3/3.1 en tiempo real.
-- **🧠 Memoria Unificada:** Cambia de modelo a mitad de una conversación sin perder el contexto. La memoria se mantiene compartida entre todos los proveedores.
+- **🤖 Multimodelo:** Selector dinámico para cambiar entre Gemini, Llama (Groq) e **IA Local (Ollama)** en tiempo real.
+- **⚡ Real-Time Streaming:** Respuestas instantáneas palabra a palabra gracias a la implementación de `StreamingResponse` y `ReadableStream`.
+- **🧠 Memoria Unificada:** Cambia de modelo a mitad de una conversación sin perder el contexto. Soporte total para el historial incluso en modelos locales.
 - **🌓 Dual Theme:** Soporte completo para Modo Oscuro (Premium) y Modo Claro con persistencia en el navegador.
-- **🎨 Estética Refinada:** Interfaz inspirada en las mejores prácticas de UI/UX modernas, con transiciones suaves y Markdown de alta fidelidad.
-- **⚡ Respuesta Instantánea:** Optimización de latencia y gestión inteligente de indicadores de escritura.
+- **🎨 Estética Refinada:** Interfaz inspirada en las mejores prácticas de UI/UX modernas, con transiciones suaves y "Smart Scroll" para lectura fluida.
 - **🛠 Gestión de Cuotas:** Detección automática de errores de límite de tokens con mensajes amigables para el usuario.
 
 ## 🚀 Instalación Rápida
@@ -33,6 +33,7 @@ Ge-mini es una interfaz de chat inteligente, minimalista y de alto rendimiento q
    ```env
    GEMINI_API_KEY=tu_clave_aqui
    GROQ_API_KEY=tu_clave_aqui
+   OLLAMA_BASE_URL=http://localhost:11434
    ```
 
 4. **Lanzar el servidor:**
@@ -61,9 +62,9 @@ Ge-mini/
 │   ├── infrastructure/ # Implementaciones concretas (SQLAlchemy, AI Adapters)
 │   ├── api/            # Routers de FastAPI, Schemas (DTOs) y Dependencias
 │   └── main.py         # Punto de entrada de la aplicación
+├── docs/               # Capturas y documentación técnica (Gamma export)
 ├── static/             # Frontend (HTML, CSS, JS)
 ├── data/               # Base de datos SQLite (gemini_chat.db)
-├── docs/               # Capturas y documentación
 ├── tools/              # Scripts de ejecución (.bat)
 ├── requirements.txt    # Dependencias del proyecto
 └── .env                # Configuración secreta
@@ -74,7 +75,8 @@ Ge-mini/
 - **Backend:** FastAPI (Python 3.10+) con Clean Architecture.
 - **ORM/Persistencia:** SQLAlchemy 2.0 (Async) + aiosqlite.
 - **Frontend:** HTML5, CSS3 Variables, JavaScript Vanilla.
-- **IA:** Google GenAI SDK, Groq SDK (Patrón Strategy/Adapter).
+- **IA Local:** Ollama SDK (Patrón Strategy/Adapter).
+- **IA Cloud:** Google GenAI SDK, Groq SDK.
 - **Markdown:** Marked.js para el renderizado de respuestas.
 
 ---
