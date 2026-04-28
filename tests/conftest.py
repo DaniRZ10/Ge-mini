@@ -1,69 +1,116 @@
+"""
+Configuración de tests para Ge-mini.
+- BD SQLite en MEMORIA (aislada, rápida)
+- FakeProvider que simula respuestas de IA sin red
+- Override de dependencias FastAPI
+"""
 import pytest
-import os
 import asyncio
+from typing import List, AsyncIterator
 from httpx import AsyncClient, ASGITransport
-from unittest.mock import MagicMock, patch
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 
-# Configuramos la variable de entorno ANTES de importar la app
-# para que app.database use la ruta de test.
-TEST_DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "test_gemini.db")
-os.environ["DATABASE_URL"] = TEST_DB_PATH
+from app.domain.entities import Message
+from app.domain.providers.base import AiProvider
+from app.infrastructure.database.models import Base
+from app.api.dependencies import get_conversation_repo, get_message_repo, get_chat_service
+from app.infrastructure.database.repositories import SqlAlchemyConversationRepository, SqlAlchemyMessageRepository
+from app.application.services.chat_service import ChatService
 
-from app.main import app
-from app import database as db
 
-@pytest.fixture(scope="session", autouse=True)
-def setup_test_env():
-    """Configuración global antes de todos los tests."""
-    # Asegurarnos de que no usamos claves reales accidentalmente (opcional)
-    # os.environ["GEMINI_API_KEY"] = "mock_key"
-    # os.environ["GROQ_API_KEY"] = "mock_key"
-    yield
-    # Limpieza final: borrar la BD de test si existe
-    if os.path.exists(TEST_DB_PATH):
-        os.remove(TEST_DB_PATH)
+# ─── Fake AI Provider (sin red, sin APIs) ───
+
+class FakeProvider(AiProvider):
+    """Proveedor de IA falso para tests. Devuelve respuestas predecibles."""
+    
+    async def send_message(self, message: str, history: List[Message], model_id: str) -> str:
+        return f"Respuesta fake para: {message}"
+
+    async def send_message_stream(self, message: str, history: List[Message], model_id: str) -> AsyncIterator[str]:
+        words = f"Streaming fake para: {message}".split()
+        for word in words:
+            yield word + " "
+
+
+class FakeProviderFactory:
+    """Fábrica que siempre devuelve el FakeProvider."""
+    
+    def __init__(self, system_prompt: str = ""):
+        self.system_prompt = system_prompt
+    
+    def get_provider(self, model_id: str) -> AiProvider:
+        return FakeProvider()
+
+
+# ─── Motor de BD en memoria ───
+
+TEST_ENGINE = create_async_engine("sqlite+aiosqlite://", echo=False)
+TestSessionLocal = async_sessionmaker(TEST_ENGINE, expire_on_commit=False, class_=AsyncSession)
+
+
+# ─── Fixtures ───
+
+@pytest.fixture(scope="session")
+def event_loop():
+    """Crea un event loop compartido para toda la sesión de tests."""
+    loop = asyncio.new_event_loop()
+    yield loop
+    loop.close()
+
 
 @pytest.fixture(autouse=True)
-async def initialize_db():
-    """Inicializa la BD antes de cada test para tener un estado limpio."""
-    await db.init_db()
+async def setup_database():
+    """Crea todas las tablas antes de cada test y las destruye después."""
+    async with TEST_ENGINE.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
     yield
-    # Podríamos limpiar tablas aquí si fuera necesario
+    async with TEST_ENGINE.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+
+
+@pytest.fixture
+async def db_session():
+    """Sesión de BD directa para tests unitarios."""
+    async with TestSessionLocal() as session:
+        yield session
+
 
 @pytest.fixture
 async def client():
-    """Proporciona un cliente httpx configurado para la app."""
+    """Cliente HTTP para tests de integración con dependencias sobreescritas."""
+    from app.main import app
+
+    # Override de TODAS las dependencias que usan BD o IA
+    app.dependency_overrides[get_chat_service] = _get_test_chat_service
+    app.dependency_overrides[get_conversation_repo] = _get_test_conversation_repo
+    app.dependency_overrides[get_message_repo] = _get_test_message_repo
+    
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
 
-@pytest.fixture(autouse=True)
-def mock_ai_clients():
-    """
-    Mockea automáticamente los clientes de Gemini y Groq en app.main.
-    Se ejecuta para cada test automáticamente.
-    """
-    with patch("app.main.clients") as mock_clients:
-        # Mock para Gemini
-        mock_gemini = MagicMock()
-        # Simulamos la respuesta de session.send_message(user_msg).text
-        mock_gemini.chats.create.return_value.send_message.return_value.text = "Hola! Soy tu Ge-mini de prueba."
-        
-        # Mock para Groq
-        mock_groq = MagicMock()
-        # Simulamos response.choices[0].message.content
-        mock_groq.chat.completions.create.return_value.choices[0].message.content = "Respuesta simulada de Llama vía Groq."
-        
-        # Asignamos al diccionario de clientes
-        mock_clients.__getitem__.side_effect = lambda k: {
-            "gemini": mock_gemini,
-            "groq": mock_groq
-        }.get(k)
-        
-        # Para que clients.get(provider) funcione
-        mock_clients.get.side_effect = lambda k: {
-            "gemini": mock_gemini,
-            "groq": mock_groq
-        }.get(k)
-        
-        yield mock_clients
+    # Limpiar overrides
+    app.dependency_overrides.clear()
+
+
+# ─── Dependency Override Generators ───
+
+async def _get_test_chat_service():
+    """ChatService con BD de test y FakeProvider."""
+    async with TestSessionLocal() as session:
+        conv_repo = SqlAlchemyConversationRepository(session)
+        msg_repo = SqlAlchemyMessageRepository(session)
+        factory = FakeProviderFactory()
+        yield ChatService(session, conv_repo, msg_repo, factory)
+
+
+async def _get_test_conversation_repo():
+    """Repositorio de conversaciones apuntando a la BD de test."""
+    async with TestSessionLocal() as session:
+        yield SqlAlchemyConversationRepository(session)
+
+
+async def _get_test_message_repo():
+    """Repositorio de mensajes apuntando a la BD de test."""
+    async with TestSessionLocal() as session:
+        yield SqlAlchemyMessageRepository(session)
