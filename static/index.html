@@ -820,17 +820,21 @@
           currentConversationId = headerId;
         }
 
-        hideTyping();
-        const aiMsgContent = createStreamingAiBubble();
-        let fullResponse = "";
-
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
+        let aiMsgContent = null;
+        let fullResponse = "";
 
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
           
+          // Al recibir el primer chunk, quitamos los puntitos y creamos la burbuja
+          if (!aiMsgContent) {
+            hideTyping();
+            aiMsgContent = createStreamingAiBubble();
+          }
+
           let chunk = decoder.decode(value, { stream: true });
           
           // Filtro de seguridad para limpiar símbolos LaTeX rebeldes

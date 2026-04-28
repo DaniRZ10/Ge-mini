@@ -119,17 +119,31 @@ async def chat_stream(
     service: ChatService = Depends(get_chat_service)
 ):
     """Endpoint de streaming para respuestas en tiempo real."""
-    # Si no hay ID, lo generamos aquí para poder enviarlo en el header
     import uuid
     conv_id = request.conversation_id or str(uuid.uuid4())
     
+    async def stream_and_save():
+        """Wrapper: emite chunks al frontend y guarda en DB al terminar."""
+        full_reply = ""
+        async for chunk in service.get_stream_generator(
+            message_content=request.message,
+            model_id=request.model,
+            conversation_id=conv_id
+        ):
+            full_reply += chunk
+            yield chunk
+        
+        # Esto se ejecuta DESPUÉS de que el último chunk se haya enviado
+        await service.save_stream_result(
+            message_content=request.message,
+            full_reply=full_reply,
+            model_id=request.model,
+            conversation_id=conv_id
+        )
+    
     try:
         return StreamingResponse(
-            service.start_chat_stream(
-                message_content=request.message,
-                model_id=request.model,
-                conversation_id=conv_id
-            ),
+            stream_and_save(),
             media_type="text/event-stream",
             headers={"X-Conversation-Id": conv_id}
         )
