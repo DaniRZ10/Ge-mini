@@ -14,17 +14,27 @@ class OllamaAdapter(AiProvider):
     async def send_message(self, message: str, history: List[Message], model_id: str) -> str:
         url = f"{self.base_url}/api/chat"
         
-        ollama_messages = [{"role": "system", "content": self.system_prompt}]
-        for m in history:
+        ollama_messages = []
+        for i, m in enumerate(history):
             role = "user" if m.role == "user" else "assistant"
-            ollama_messages.append({"role": role, "content": m.content})
+            content = m.content
+            # Incrustar el system prompt oculto en el primer mensaje del usuario
+            if i == 0 and role == "user":
+                content = f"Instrucciones del sistema:\n{self.system_prompt}\n\nMensaje del usuario:\n{content}"
+            ollama_messages.append({"role": role, "content": content})
             
-        ollama_messages.append({"role": "user", "content": message})
+        final_message = message
+        # Si no hay historial, este es el primer mensaje
+        if not history:
+            final_message = f"Instrucciones del sistema:\n{self.system_prompt}\n\nMensaje del usuario:\n{message}"
+            
+        ollama_messages.append({"role": "user", "content": final_message})
         
         payload = {
             "model": model_id,
             "messages": ollama_messages,
-            "stream": False
+            "stream": False,
+            "options": {"temperature": 0.2, "num_ctx": 4096}
         }
         
         start_time = time.time()
@@ -47,30 +57,44 @@ class OllamaAdapter(AiProvider):
     async def send_message_stream(self, message: str, history: List[Message], model_id: str) -> AsyncIterator[str]:
         url = f"{self.base_url}/api/chat"
         
-        ollama_messages = [{"role": "system", "content": self.system_prompt}]
-        for m in history:
+        ollama_messages = []
+        for i, m in enumerate(history):
             role = "user" if m.role == "user" else "assistant"
-            ollama_messages.append({"role": role, "content": m.content})
-        
-        ollama_messages.append({"role": "user", "content": message})
+            content = m.content
+            # Incrustar el system prompt oculto en el primer mensaje del usuario
+            if i == 0 and role == "user":
+                content = f"Instrucciones del sistema:\n{self.system_prompt}\n\nMensaje del usuario:\n{content}"
+            ollama_messages.append({"role": role, "content": content})
+            
+        final_message = message
+        if not history:
+            final_message = f"Instrucciones del sistema:\n{self.system_prompt}\n\nMensaje del usuario:\n{message}"
+            
+        ollama_messages.append({"role": "user", "content": final_message})
         
         payload = {
             "model": model_id,
             "messages": ollama_messages,
-            "stream": True
+            "stream": True,
+            "options": {"temperature": 0.2, "num_ctx": 4096}
         }
         
-        async with httpx.AsyncClient(timeout=120.0) as client:
-            async with client.stream("POST", url, json=payload) as response:
-                response.raise_for_status()
-                async for line in response.aiter_lines():
-                    if not line:
-                        continue
-                    try:
-                        chunk = json.loads(line)
-                        if "message" in chunk and "content" in chunk["message"]:
-                            yield chunk["message"]["content"]
-                        if chunk.get("done"):
-                            break
-                    except json.JSONDecodeError:
-                        continue
+        try:
+            async with httpx.AsyncClient(timeout=120.0) as client:
+                async with client.stream("POST", url, json=payload) as response:
+                    response.raise_for_status()
+                    async for line in response.aiter_lines():
+                        if not line:
+                            continue
+                        try:
+                            chunk = json.loads(line)
+                            if "message" in chunk and "content" in chunk["message"]:
+                                yield chunk["message"]["content"]
+                            if chunk.get("done"):
+                                break
+                        except json.JSONDecodeError:
+                            continue
+        except httpx.ConnectError:
+            yield "\n\n[ERROR DEL SISTEMA]: Ollama ha dejado de responder. Esto ocurre frecuentemente si el modelo es demasiado grande para los 8GB de RAM del equipo (ej. Gemma 3) y provoca que el proceso colapse por falta de memoria."
+        except Exception as e:
+            yield f"\n\n[ERROR DEL SISTEMA]: {str(e)}"
