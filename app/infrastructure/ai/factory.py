@@ -16,7 +16,7 @@ class AiProviderFactory:
         if any(m in model_id.lower() for m in local_models) and "instant" not in model_id:
             return OllamaAdapter(self.system_prompt)
 
-        if model_id.startswith("gemini"):
+        if model_id.lower().startswith("gemini"):
             if not self.gemini_key:
                 raise ValueError("GEMINI_API_KEY no configurada.")
             return GeminiAdapter(self.gemini_key, self.system_prompt)
