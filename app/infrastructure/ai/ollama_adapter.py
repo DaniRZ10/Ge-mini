@@ -18,14 +18,14 @@ class OllamaAdapter(AiProvider):
         for i, m in enumerate(history):
             role = "user" if m.role == "user" else "assistant"
             content = m.content
-            # Incrustar el system prompt oculto en el primer mensaje del usuario
-            if i == 0 and role == "user":
+            # Solo incrustar si el prompt no está vacío
+            if i == 0 and role == "user" and self.system_prompt:
                 content = f"Instrucciones del sistema:\n{self.system_prompt}\n\nMensaje del usuario:\n{content}"
             ollama_messages.append({"role": role, "content": content})
             
         final_message = message
-        # Si no hay historial, este es el primer mensaje
-        if not history:
+        # Si no hay historial y hay prompt, inyectamos
+        if not history and self.system_prompt:
             final_message = f"Instrucciones del sistema:\n{self.system_prompt}\n\nMensaje del usuario:\n{message}"
             
         ollama_messages.append({"role": "user", "content": final_message})
@@ -61,13 +61,13 @@ class OllamaAdapter(AiProvider):
         for i, m in enumerate(history):
             role = "user" if m.role == "user" else "assistant"
             content = m.content
-            # Incrustar el system prompt oculto en el primer mensaje del usuario
-            if i == 0 and role == "user":
+            # Solo incrustar si el prompt no está vacío
+            if i == 0 and role == "user" and self.system_prompt:
                 content = f"Instrucciones del sistema:\n{self.system_prompt}\n\nMensaje del usuario:\n{content}"
             ollama_messages.append({"role": role, "content": content})
             
         final_message = message
-        if not history:
+        if not history and self.system_prompt:
             final_message = f"Instrucciones del sistema:\n{self.system_prompt}\n\nMensaje del usuario:\n{message}"
             
         ollama_messages.append({"role": "user", "content": final_message})
