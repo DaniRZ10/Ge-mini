@@ -28,12 +28,13 @@ class ChatService:
         async with self.session.begin():
             if not conversation_id:
                 conversation_id = await self._create_conversation(message_content)
-            
             await self._save_message(conversation_id, "user", message_content, model_id, provider_name)
-            history = await self.msg_repo.get_by_conversation(conversation_id)
+
+        # Recuperar historial (puede ser fuera del bloque si ya se persistió el mensaje)
+        history_entities = await self.msg_repo.get_by_conversation(conversation_id)
 
         # 2. Llamar al proveedor (si falla, el mensaje del usuario ya está a salvo)
-        reply_content = await provider_obj.send_message(message_content, history, model_id)
+        reply_content = await provider_obj.send_message(message_content, history_entities, model_id)
 
         # 3. Persistir la respuesta
         async with self.session.begin():
