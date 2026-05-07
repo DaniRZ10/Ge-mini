@@ -1,7 +1,7 @@
 import pytest
 import os
 from fastapi.testclient import TestClient
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, patch, PropertyMock
 
 from app.main import app
 from app.api.dependencies import get_chat_service
@@ -31,6 +31,7 @@ async def test_chat_service_persists_user_message_before_ai_call():
     
     factory = MagicMock()
     provider = MagicMock()
+    type(provider).name = PropertyMock(return_value="mock-provider")
     provider.send_message = AsyncMock()
     
     factory.get_provider.return_value = provider
