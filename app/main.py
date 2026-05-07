@@ -122,26 +122,26 @@ async def chat_stream(
     import uuid
     conv_id = request.conversation_id or str(uuid.uuid4())
     
-    async def stream_and_save():
-        """Wrapper: emite chunks al frontend y guarda en DB al terminar."""
-        full_reply = ""
-        async for chunk in service.get_stream_generator(
-            message_content=request.message,
-            model_id=request.model,
-            conversation_id=conv_id
-        ):
-            full_reply += chunk
-            yield chunk
-        
-        # Esto se ejecuta DESPUÉS de que el último chunk se haya enviado
-        await service.save_stream_result(
-            message_content=request.message,
-            full_reply=full_reply,
-            model_id=request.model,
-            conversation_id=conv_id
-        )
-    
     try:
+        # 1. Persistir mensaje del usuario inmediatamente
+        await service.persist_user_message(request.message, request.model, conv_id)
+        
+        async def stream_and_save():
+            """Wrapper: emite chunks al frontend y asegura la persistencia de lo recibido."""
+            full_reply = ""
+            try:
+                async for chunk in service.get_stream_generator(
+                    message_content=request.message,
+                    model_id=request.model,
+                    conversation_id=conv_id
+                ):
+                    full_reply += chunk
+                    yield chunk
+            finally:
+                # 2. Persistir lo que hayamos recibido, sea completo o parcial
+                if full_reply:
+                    await service.persist_assistant_message(full_reply, request.model, conv_id)
+        
         return StreamingResponse(
             stream_and_save(),
             media_type="text/event-stream",

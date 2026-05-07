@@ -24,22 +24,38 @@ class ChatService:
         provider_obj = self.provider_factory.get_provider(model_id)
         provider_name = self._get_provider_name(model_id)
 
-        history = []
-        if conversation_id:
-            async with self.session.begin():
-                history = await self.msg_repo.get_by_conversation(conversation_id)
-
-        reply_content = await provider_obj.send_message(message_content, history, model_id)
-
+        # 1. Asegurar conversación y persistir mensaje del usuario primero
         async with self.session.begin():
             if not conversation_id:
                 conversation_id = await self._create_conversation(message_content)
-
+            
             await self._save_message(conversation_id, "user", message_content, model_id, provider_name)
+            history = await self.msg_repo.get_by_conversation(conversation_id)
+
+        # 2. Llamar al proveedor (si falla, el mensaje del usuario ya está a salvo)
+        reply_content = await provider_obj.send_message(message_content, history, model_id)
+
+        # 3. Persistir la respuesta
+        async with self.session.begin():
             saved_reply = await self._save_message(conversation_id, "assistant", reply_content, model_id, provider_name)
             await self.conv_repo.touch(conversation_id)
-
             return saved_reply
+
+    async def persist_user_message(self, message_content: str, model_id: str, conversation_id: str):
+        """Persiste el mensaje del usuario antes de iniciar un stream."""
+        provider_name = self._get_provider_name(model_id)
+        async with self.session.begin():
+            existing = await self.conv_repo.get_by_id(conversation_id)
+            if not existing:
+                await self._create_conversation_with_id(conversation_id, message_content)
+            await self._save_message(conversation_id, "user", message_content, model_id, provider_name)
+
+    async def persist_assistant_message(self, full_reply: str, model_id: str, conversation_id: str):
+        """Persiste la respuesta del asistente (completa o parcial) tras el stream."""
+        provider_name = self._get_provider_name(model_id)
+        async with self.session.begin():
+            await self._save_message(conversation_id, "assistant", full_reply, model_id, provider_name)
+            await self.conv_repo.touch(conversation_id)
 
     async def get_stream_generator(self, message_content: str, model_id: str, conversation_id: Optional[str] = None) -> AsyncIterator[str]:
         """Devuelve un generador que SOLO emite chunks de texto. No guarda nada en la DB."""
@@ -53,19 +69,6 @@ class ChatService:
         async for chunk in provider_obj.send_message_stream(message_content, history, model_id):
             yield chunk
 
-    async def save_stream_result(self, message_content: str, full_reply: str, model_id: str, conversation_id: str):
-        """Guarda ambos mensajes (usuario + IA) después de que el stream haya terminado."""
-        provider_name = self._get_provider_name(model_id)
-
-        async with self.session.begin():
-            # Verificar si la conversación existe; si no, crearla
-            existing = await self.conv_repo.get_by_id(conversation_id)
-            if not existing:
-                await self._create_conversation_with_id(conversation_id, message_content)
-
-            await self._save_message(conversation_id, "user", message_content, model_id, provider_name)
-            await self._save_message(conversation_id, "assistant", full_reply, model_id, provider_name)
-            await self.conv_repo.touch(conversation_id)
 
     def _get_provider_name(self, model_id: str) -> str:
         if model_id.startswith("gemini"): return "gemini"
