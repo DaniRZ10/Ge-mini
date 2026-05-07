@@ -13,6 +13,7 @@ from dotenv import load_dotenv
 
 # Infraestructura y Capas
 from .infrastructure.database.session import init_db
+from .core.logging import setup_logging
 from .api.schemas import ChatRequest, ChatResponse, ConversationOut, MessageOut
 from .api.dependencies import get_chat_service, get_conversation_repo, get_message_repo
 from .infrastructure.ai.gemini_adapter import GeminiAdapter
@@ -24,9 +25,9 @@ load_dotenv()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Inicializa la base de datos (SQLAlchemy) al arrancar."""
+    """Inicializa servicios al arrancar."""
+    setup_logging()
     await init_db()
-    print("[OK] Base de datos (SQLAlchemy) inicializada.")
     yield
 
 app = FastAPI(

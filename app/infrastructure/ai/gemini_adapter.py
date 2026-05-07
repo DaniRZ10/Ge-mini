@@ -2,6 +2,7 @@ import google.generativeai as genai
 from google.api_core import exceptions, retry
 from typing import List, AsyncIterator
 import asyncio
+import logging
 
 from ...domain.entities import Message
 from ...domain.providers.base import AiProvider
@@ -34,7 +35,7 @@ class GeminiAdapter(AiProvider):
                 for m in models if "generateContent" in m.supported_generation_methods
             ]
         except Exception as e:
-            print(f"Error listando modelos Gemini: {e}")
+            logging.error(f"Error listando modelos Gemini: {e}")
             return []
 
     async def send_message(self, message: str, history: List[Message], model_id: str) -> str:

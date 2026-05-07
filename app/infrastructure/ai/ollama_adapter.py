@@ -2,6 +2,7 @@ import os
 import httpx
 import time
 import json
+import logging
 from typing import List, AsyncIterator
 from ...domain.entities import Message
 from ...domain.providers.base import AiProvider
@@ -52,7 +53,7 @@ class OllamaAdapter(AiProvider):
                 data = response.json()
                 content = data["message"]["content"]
                 
-                print(f"\n[BENCHMARK] Modelo: {model_id} | Latencia: {latency:.2f}s | Palabras: {len(content.split())}")
+                logging.info(f"[BENCHMARK] Modelo: {model_id} | Latencia: {latency:.2f}s | Palabras: {len(content.split())}")
                 
                 return content
             except Exception as e:
