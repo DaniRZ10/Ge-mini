@@ -22,7 +22,7 @@ class ChatService:
 
     async def start_chat(self, message_content: str, model_id: str, conversation_id: Optional[str] = None) -> Message:
         provider_obj = self.provider_factory.get_provider(model_id)
-        provider_name = self._get_provider_name(model_id)
+        provider_name = provider_obj.name
 
         # 1. Asegurar conversación y persistir mensaje del usuario primero
         async with self.session.begin():
@@ -44,7 +44,8 @@ class ChatService:
 
     async def persist_user_message(self, message_content: str, model_id: str, conversation_id: str):
         """Persiste el mensaje del usuario antes de iniciar un stream."""
-        provider_name = self._get_provider_name(model_id)
+        provider_obj = self.provider_factory.get_provider(model_id)
+        provider_name = provider_obj.name
         async with self.session.begin():
             existing = await self.conv_repo.get_by_id(conversation_id)
             if not existing:
@@ -53,7 +54,8 @@ class ChatService:
 
     async def persist_assistant_message(self, full_reply: str, model_id: str, conversation_id: str):
         """Persiste la respuesta del asistente (completa o parcial) tras el stream."""
-        provider_name = self._get_provider_name(model_id)
+        provider_obj = self.provider_factory.get_provider(model_id)
+        provider_name = provider_obj.name
         async with self.session.begin():
             await self._save_message(conversation_id, "assistant", full_reply, model_id, provider_name)
             await self.conv_repo.touch(conversation_id)
@@ -71,10 +73,6 @@ class ChatService:
             yield chunk
 
 
-    def _get_provider_name(self, model_id: str) -> str:
-        if model_id.startswith("gemini"): return "gemini"
-        if any(m in model_id.lower() for m in ["qwen", "deepseek", "phi", "gemma"]): return "ollama"
-        return "groq"
 
     async def _create_conversation(self, message_content: str) -> str:
         title = message_content[:50] + ("..." if len(message_content) > 50 else "")

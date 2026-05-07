@@ -12,6 +12,10 @@ class GeminiAdapter(AiProvider):
         self.system_prompt = system_prompt
         genai.configure(api_key=api_key)
 
+    @property
+    def name(self) -> str:
+        return "gemini"
+
     def _prepare_history(self, history: List[Message]):
         contents = []
         for m in history:

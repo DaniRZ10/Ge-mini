@@ -11,6 +11,10 @@ class OllamaAdapter(AiProvider):
         self.base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
         self.system_prompt = system_prompt
 
+    @property
+    def name(self) -> str:
+        return "ollama"
+
     async def send_message(self, message: str, history: List[Message], model_id: str) -> str:
         url = f"{self.base_url}/api/chat"
         
