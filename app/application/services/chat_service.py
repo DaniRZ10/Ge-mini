@@ -4,15 +4,15 @@ import uuid
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...domain.entities import Conversation, Message
-from ...infrastructure.database.repositories import SqlAlchemyConversationRepository, SqlAlchemyMessageRepository
+from ...domain.repositories.interfaces import ConversationRepository, MessageRepository
 from ...infrastructure.ai.factory import AiProviderFactory
 
 class ChatService:
     def __init__(
         self,
         session: AsyncSession,
-        conv_repo: SqlAlchemyConversationRepository,
-        msg_repo: SqlAlchemyMessageRepository,
+        conv_repo: ConversationRepository,
+        msg_repo: MessageRepository,
         provider_factory: AiProviderFactory
     ):
         self.session = session

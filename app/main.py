@@ -63,7 +63,7 @@ async def list_gemini_models():
 async def list_conversations(
     repo: SqlAlchemyConversationRepository = Depends(get_conversation_repo)
 ):
-    convs = await repo.list_all()
+    convs = await repo.get_all()
     return [
         ConversationOut(
             id=c.id, 
