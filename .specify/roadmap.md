@@ -4,7 +4,7 @@ This document tracks the progress of fixing the vulnerabilities and debt identif
 
 ## Phase 1: Critical Security & Reliability
 - [ ] **C2: XSS Prevention** (Frontend sanitization).
-- [ ] **C3: API Authentication** (Token-based auth).
+- [ ] **C3: API Authentication** (Token-based auth) - *Postergado por petición del usuario*
 - [ ] **A1: User Message Persistence** (Fix race condition in `ChatService`).
 - [ ] **A2: Stream Integrity** (Partial response persistence).
 
