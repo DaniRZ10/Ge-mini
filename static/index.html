@@ -621,6 +621,31 @@
     //  HISTORIAL — Carga, renderizado y navegación
     // ══════════════════════════════════════════════
 
+    async function discoverModels() {
+      try {
+        const res = await fetch("/api/models/gemini");
+        const models = await res.json();
+        const select = document.getElementById("model-select");
+        
+        if (models && models.length > 0) {
+          // Limpiar opciones de gemini actuales pero mantener las otras
+          const existingGemini = select.querySelectorAll('option[value^="gemini"]');
+          existingGemini.forEach(opt => opt.remove());
+
+          models.forEach(m => {
+            const opt = document.createElement("option");
+            opt.value = m.id;
+            opt.textContent = m.name;
+            // Pre-seleccionar Gemini 1.5 Flash como default sensato si existe
+            if (m.id === 'gemini-1.5-flash' || m.id === 'gemini-flash-latest') opt.selected = true;
+            select.appendChild(opt);
+          });
+        }
+      } catch (e) {
+        console.warn("No se pudieron descubrir modelos de Gemini:", e);
+      }
+    }
+
     async function loadConversations() {
       try {
         const res = await fetch("/api/conversations");
@@ -861,7 +886,11 @@
 
       } catch (err) {
         hideTyping();
-        addMessage("ai", `**Error:** ${err.message}`);
+        let errorMsg = err.message;
+        if (errorMsg.includes("Rate Limit") || errorMsg.includes("429") || errorMsg.includes("Cuota")) {
+          errorMsg = "Límite de Gemini alcanzado (5 RPM). Prueba con Groq u Ollama mientras esperas.";
+        }
+        addMessage("ai", `**Error:** ${errorMsg}`);
       } finally {
         sendBtn.disabled = false;
       }
@@ -899,7 +928,8 @@
       input.style.height = Math.min(input.scrollHeight, 200) + "px";
     });
 
-    // ── Carga inicial del historial ──
+    // ── Carga inicial ──
+    discoverModels();
     loadConversations();
   </script>
 </body>

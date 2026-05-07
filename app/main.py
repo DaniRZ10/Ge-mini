@@ -15,6 +15,7 @@ from dotenv import load_dotenv
 from .infrastructure.database.session import init_db
 from .api.schemas import ChatRequest, ChatResponse, ConversationOut, MessageOut
 from .api.dependencies import get_chat_service, get_conversation_repo, get_message_repo
+from .infrastructure.ai.gemini_adapter import GeminiAdapter
 from .infrastructure.database.repositories import SqlAlchemyConversationRepository, SqlAlchemyMessageRepository
 from .application.services.chat_service import ChatService
 
@@ -40,9 +41,21 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 @app.get("/")
 async def root():
     providers = []
+    import os
     if os.getenv("GEMINI_API_KEY"): providers.append("gemini")
     if os.getenv("GROQ_API_KEY"): providers.append("groq")
     return {"status": "Ge-mini is alive and Clean 💠", "providers": providers}
+
+@app.get("/api/models/gemini")
+async def list_gemini_models():
+    """Descubre dinámicamente los modelos de Gemini disponibles."""
+    import os
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        return []
+    
+    adapter = GeminiAdapter(api_key, "")
+    return await adapter.list_models()
 
 # --- Endpoints: Conversaciones ---
 
