@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 # Infraestructura y Capas
 from .infrastructure.database.session import init_db
 from .api.schemas import ChatRequest, ChatResponse, ConversationOut, MessageOut
-from .api.dependencies import get_chat_service, get_conversation_repo, get_message_repo, require_token
+from .api.dependencies import get_chat_service, get_conversation_repo, get_message_repo
 from .infrastructure.database.repositories import SqlAlchemyConversationRepository, SqlAlchemyMessageRepository
 from .application.services.chat_service import ChatService
 
@@ -46,7 +46,7 @@ async def root():
 
 # --- Endpoints: Conversaciones ---
 
-@app.get("/api/conversations", response_model=list[ConversationOut], dependencies=[Depends(require_token)])
+@app.get("/api/conversations", response_model=list[ConversationOut])
 async def list_conversations(
     repo: SqlAlchemyConversationRepository = Depends(get_conversation_repo)
 ):
@@ -60,7 +60,7 @@ async def list_conversations(
         ) for c in convs
     ]
 
-@app.get("/api/conversations/{conversation_id}/messages", response_model=list[MessageOut], dependencies=[Depends(require_token)])
+@app.get("/api/conversations/{conversation_id}/messages", response_model=list[MessageOut])
 async def get_messages(
     conversation_id: str,
     repo: SqlAlchemyMessageRepository = Depends(get_message_repo)
@@ -79,7 +79,7 @@ async def get_messages(
         ) for m in messages
     ]
 
-@app.delete("/api/conversations/{conversation_id}", dependencies=[Depends(require_token)])
+@app.delete("/api/conversations/{conversation_id}")
 async def delete_conversation(
     conversation_id: str,
     repo: SqlAlchemyConversationRepository = Depends(get_conversation_repo)
@@ -92,7 +92,7 @@ async def delete_conversation(
 
 # --- Endpoints principales: Chat ---
 
-@app.post("/api/chat", response_model=ChatResponse, dependencies=[Depends(require_token)])
+@app.post("/api/chat", response_model=ChatResponse)
 async def chat(
     request: ChatRequest,
     service: ChatService = Depends(get_chat_service)
@@ -113,7 +113,7 @@ async def chat(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")
 
-@app.post("/api/chat/stream", dependencies=[Depends(require_token)])
+@app.post("/api/chat/stream")
 async def chat_stream(
     request: ChatRequest,
     service: ChatService = Depends(get_chat_service)

@@ -4,26 +4,9 @@ from fastapi.testclient import TestClient
 from unittest.mock import AsyncMock, patch
 
 from app.main import app
-from app.api.dependencies import require_token
+from app.api.dependencies import get_chat_service
 
 client = TestClient(app)
-
-@pytest.fixture
-def mock_app_token():
-    with patch("app.api.dependencies.APP_TOKEN", "test-token"):
-        yield "test-token"
-
-def test_auth_unauthorized_when_token_set(mock_app_token):
-    # Sin token
-    response = client.get("/api/conversations")
-    assert response.status_code == 401
-    assert response.json()["detail"] == "Unauthorized"
-
-def test_auth_authorized_when_token_set(mock_app_token):
-    # Con token correcto
-    response = client.get("/api/conversations", headers={"Authorization": f"Bearer {mock_app_token}"})
-    # Aquí puede fallar por DB u otra cosa, pero no debería ser 401
-    assert response.status_code != 401
 
 @pytest.mark.asyncio
 async def test_chat_service_persists_user_message_before_ai_call():

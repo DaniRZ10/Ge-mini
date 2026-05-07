@@ -581,32 +581,6 @@
 
     // ── Estado de la aplicación ──
     let currentConversationId = null;
-    let appToken = localStorage.getItem("app_token") || "";
-
-    // ── Helper para fetch autenticado ──
-    async function authFetch(url, options = {}) {
-      if (!appToken && APP_CONFIG.requireAuth) {
-        appToken = prompt("Introduce tu APP_TOKEN para continuar:");
-        if (appToken) localStorage.setItem("app_token", appToken);
-      }
-
-      const headers = {
-        ...options.headers,
-        "Authorization": `Bearer ${appToken}`
-      };
-      
-      const res = await fetch(url, { ...options, headers });
-      if (res.status === 401) {
-        localStorage.removeItem("app_token");
-        appToken = "";
-        alert("Token inválido o expirado.");
-      }
-      return res;
-    }
-
-    const APP_CONFIG = {
-      requireAuth: true // Cambiar a false si se quiere desactivar temporalmente
-    };
 
     // ── Lógica de Modo Claro/Oscuro ──
     function initTheme() {
@@ -649,7 +623,7 @@
 
     async function loadConversations() {
       try {
-        const res = await authFetch("/api/conversations");
+        const res = await fetch("/api/conversations");
         const conversations = await res.json();
         renderHistoryList(conversations);
       } catch (e) {
@@ -700,7 +674,7 @@
       if (emptyState) emptyState.style.display = "none";
 
       try {
-        const res = await authFetch(`/api/conversations/${conversationId}/messages`);
+        const res = await fetch(`/api/conversations/${conversationId}/messages`);
         const messages = await res.json();
 
         messages.forEach(msg => {
@@ -716,7 +690,7 @@
 
     async function deleteConversation(conversationId) {
       try {
-        await authFetch(`/api/conversations/${conversationId}`, { method: "DELETE" });
+        await fetch(`/api/conversations/${conversationId}`, { method: "DELETE" });
 
         // Si borramos la conversación activa, resetear vista
         if (conversationId === currentConversationId) {
@@ -836,7 +810,7 @@
       showTyping();
 
       try {
-        const res = await authFetch("/api/chat/stream", {
+        const res = await fetch("/api/chat/stream", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ 
