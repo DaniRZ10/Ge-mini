@@ -8,6 +8,10 @@ class GroqAdapter(AiProvider):
         self.client = Groq(api_key=api_key)
         self.system_prompt = system_prompt
 
+    @property
+    def name(self) -> str:
+        return "groq"
+
     async def send_message(self, message: str, history: List[Message], model_id: str) -> str:
         messages = [{"role": "system", "content": self.system_prompt}]
         for m in history:

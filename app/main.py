@@ -4,17 +4,20 @@ Ge-mini — Proyecto Antigravity 💠
 Servidor FastAPI refactorizado con Clean Architecture.
 """
 
+import os
+import uuid
+from dotenv import load_dotenv
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
-import os
-from dotenv import load_dotenv
 
 # Infraestructura y Capas
 from .infrastructure.database.session import init_db
+from .core.logging import setup_logging
 from .api.schemas import ChatRequest, ChatResponse, ConversationOut, MessageOut
 from .api.dependencies import get_chat_service, get_conversation_repo, get_message_repo
+from .infrastructure.ai.gemini_adapter import GeminiAdapter
 from .infrastructure.database.repositories import SqlAlchemyConversationRepository, SqlAlchemyMessageRepository
 from .application.services.chat_service import ChatService
 
@@ -23,9 +26,9 @@ load_dotenv()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Inicializa la base de datos (SQLAlchemy) al arrancar."""
+    """Inicializa servicios al arrancar."""
+    setup_logging()
     await init_db()
-    print("[OK] Base de datos (SQLAlchemy) inicializada.")
     yield
 
 app = FastAPI(
@@ -40,9 +43,21 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 @app.get("/")
 async def root():
     providers = []
+    import os
     if os.getenv("GEMINI_API_KEY"): providers.append("gemini")
     if os.getenv("GROQ_API_KEY"): providers.append("groq")
     return {"status": "Ge-mini is alive and Clean 💠", "providers": providers}
+
+@app.get("/api/models/gemini")
+async def list_gemini_models():
+    """Descubre dinámicamente los modelos de Gemini disponibles."""
+    import os
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        return []
+    
+    adapter = GeminiAdapter(api_key, "")
+    return await adapter.list_models()
 
 # --- Endpoints: Conversaciones ---
 
@@ -50,7 +65,7 @@ async def root():
 async def list_conversations(
     repo: SqlAlchemyConversationRepository = Depends(get_conversation_repo)
 ):
-    convs = await repo.list_all()
+    convs = await repo.get_all()
     return [
         ConversationOut(
             id=c.id, 
@@ -119,29 +134,28 @@ async def chat_stream(
     service: ChatService = Depends(get_chat_service)
 ):
     """Endpoint de streaming para respuestas en tiempo real."""
-    import uuid
     conv_id = request.conversation_id or str(uuid.uuid4())
     
-    async def stream_and_save():
-        """Wrapper: emite chunks al frontend y guarda en DB al terminar."""
-        full_reply = ""
-        async for chunk in service.get_stream_generator(
-            message_content=request.message,
-            model_id=request.model,
-            conversation_id=conv_id
-        ):
-            full_reply += chunk
-            yield chunk
-        
-        # Esto se ejecuta DESPUÉS de que el último chunk se haya enviado
-        await service.save_stream_result(
-            message_content=request.message,
-            full_reply=full_reply,
-            model_id=request.model,
-            conversation_id=conv_id
-        )
-    
     try:
+        # 1. Persistir mensaje del usuario inmediatamente
+        await service.persist_user_message(request.message, request.model, conv_id)
+        
+        async def stream_and_save():
+            """Wrapper: emite chunks al frontend y asegura la persistencia de lo recibido."""
+            full_reply = ""
+            try:
+                async for chunk in service.get_stream_generator(
+                    message_content=request.message,
+                    model_id=request.model,
+                    conversation_id=conv_id
+                ):
+                    full_reply += chunk
+                    yield chunk
+            finally:
+                # 2. Persistir lo que hayamos recibido, sea completo o parcial
+                if full_reply:
+                    await service.persist_assistant_message(full_reply, request.model, conv_id)
+        
         return StreamingResponse(
             stream_and_save(),
             media_type="text/event-stream",

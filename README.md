@@ -10,8 +10,10 @@ Ge-mini es una interfaz de chat inteligente, minimalista y de alto rendimiento q
 - **⚡ Real-Time Streaming:** Respuestas instantáneas palabra a palabra gracias a la implementación de `StreamingResponse` y `ReadableStream`.
 - **🧠 Memoria Unificada:** Cambia de modelo a mitad de una conversación sin perder el contexto. Soporte total para el historial incluso en modelos locales.
 - **🌓 Dual Theme:** Soporte completo para Modo Oscuro (Premium) y Modo Claro con persistencia en el navegador.
-- **🎨 Estética Refinada:** Interfaz inspirada en las mejores prácticas de UI/UX modernas, con transiciones suaves y "Smart Scroll" para lectura fluida.
-- **🛠 Gestión de Cuotas:** Detección automática de errores de límite de tokens con mensajes amigables para el usuario.
+- **🎨 Estética Refinada:** Interfaz premium con transiciones suaves, **glassmorphism** y "Smart Scroll".
+- **🛠 Gestión de Cuotas:** Detección automática de errores de límite de tokens con mensajes amigables.
+- **🛡️ Seguridad:** Sanitización XSS integrada con `DOMPurify` para un renderizado seguro de Markdown.
+- **📜 Migraciones:** Gestión de base de datos profesional con **Alembic**.
 
 ## 🚀 Instalación Rápida
 
@@ -58,26 +60,24 @@ Para ejecutar los tests automatizados y asegurar que todo funciona:
 Ge-mini/
 ├── app/
 │   ├── domain/         # Entidades puras e interfaces (Repository/Provider)
-│   ├── application/    # Casos de uso y lógica de orquestación (Servicios)
-│   ├── infrastructure/ # Implementaciones concretas (SQLAlchemy, AI Adapters)
-│   ├── api/            # Routers de FastAPI, Schemas (DTOs) y Dependencias
-│   └── main.py         # Punto de entrada de la aplicación
-├── docs/               # Capturas y documentación técnica (Gamma export)
-├── static/             # Frontend (HTML, CSS, JS)
-├── data/               # Base de datos SQLite (gemini_chat.db)
-├── tools/              # Scripts de ejecución (.bat)
-├── requirements.txt    # Dependencias del proyecto
-└── .env                # Configuración secreta
+│   ├── application/    # Lógica de orquestación (Servicios de Chat)
+│   ├── infrastructure/ # Implementaciones (SQLAlchemy, AI Adapters)
+│   ├── core/           # Configuración global (Logging)
+│   └── main.py         # Punto de entrada FastAPI
+├── migrations/         # Versiones de base de datos (Alembic)
+├── static/             # Frontend (HTML, CSS con Glassmorphism, JS)
+├── data/               # Base de datos SQLite
+├── tests/              # Suite de pruebas SDD (pytest)
+└── .specify/           # Especificaciones del diseño (SDD)
 ```
 
 ## 🛠 Tecnologías Utilizadas
 
-- **Backend:** FastAPI (Python 3.10+) con Clean Architecture.
-- **ORM/Persistencia:** SQLAlchemy 2.0 (Async) + aiosqlite.
-- **Frontend:** HTML5, CSS3 Variables, JavaScript Vanilla.
-- **IA Local:** Ollama SDK (Patrón Strategy/Adapter).
-- **IA Cloud:** Google GenAI SDK, Groq SDK.
-- **Markdown:** Marked.js para el renderizado de respuestas.
+- **Backend:** FastAPI con Clean Architecture.
+- **ORM/Persistencia:** SQLAlchemy 2.0 (Async) + Alembic para migraciones.
+- **Frontend:** JavaScript Vanilla + DOMPurify (Seguridad) + Marked.js.
+- **Logging:** Módulo `logging` configurado para depuración estructurada.
+- **IA Cloud:** SDK Oficial de Google Generative AI + Groq SDK.
 
 ---
 *Desarrollado con ❤️ para el proyecto Ge-mini.*

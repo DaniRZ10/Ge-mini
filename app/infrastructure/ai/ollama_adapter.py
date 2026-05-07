@@ -2,6 +2,7 @@ import os
 import httpx
 import time
 import json
+import logging
 from typing import List, AsyncIterator
 from ...domain.entities import Message
 from ...domain.providers.base import AiProvider
@@ -10,6 +11,10 @@ class OllamaAdapter(AiProvider):
     def __init__(self, system_prompt: str):
         self.base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
         self.system_prompt = system_prompt
+
+    @property
+    def name(self) -> str:
+        return "ollama"
 
     async def send_message(self, message: str, history: List[Message], model_id: str) -> str:
         url = f"{self.base_url}/api/chat"
@@ -48,7 +53,7 @@ class OllamaAdapter(AiProvider):
                 data = response.json()
                 content = data["message"]["content"]
                 
-                print(f"\n[BENCHMARK] Modelo: {model_id} | Latencia: {latency:.2f}s | Palabras: {len(content.split())}")
+                logging.info(f"[BENCHMARK] Modelo: {model_id} | Latencia: {latency:.2f}s | Palabras: {len(content.split())}")
                 
                 return content
             except Exception as e:

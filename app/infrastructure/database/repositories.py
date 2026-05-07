@@ -3,13 +3,14 @@ from sqlalchemy import select, delete, update
 from typing import List, Optional
 from datetime import datetime, timezone
 from ...domain.entities import Conversation, Message
+from ...domain.repositories.interfaces import ConversationRepository, MessageRepository
 from .models import ConversationModel, MessageModel
 
-class SqlAlchemyConversationRepository:
+class SqlAlchemyConversationRepository(ConversationRepository):
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def list_all(self, limit: int = 50) -> List[Conversation]:
+    async def get_all(self, limit: int = 50) -> List[Conversation]:
         query = select(ConversationModel).order_by(ConversationModel.updated_at.desc()).limit(limit)
         result = await self.session.execute(query)
         models = result.scalars().all()
@@ -41,7 +42,7 @@ class SqlAlchemyConversationRepository:
         query = update(ConversationModel).where(ConversationModel.id == conversation_id).values(updated_at=now)
         await self.session.execute(query)
 
-class SqlAlchemyMessageRepository:
+class SqlAlchemyMessageRepository(MessageRepository):
     def __init__(self, session: AsyncSession):
         self.session = session
 

@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236366f1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 2L4 7l8 5 8-5-8-5zM4 12l8 5 8-5M4 17l8 5 8-5'/%3E%3C/svg%3E" />
 
   <style>
@@ -45,7 +46,22 @@
       background-color: var(--bg-primary);
       color: var(--text-primary);
       overflow: hidden;
-      transition: background-color 0.3s ease, color 0.3s ease; /* Transición suave de tema */
+      transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* ── ANIMACIONES ── */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.95); }
+    }
+
+    .animate-fade-in {
+      animation: fadeInUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
     }
 
     /* ── MODO CLARO (Light Mode) ── */
@@ -110,12 +126,14 @@
     #sidebar {
       width: 260px;
       background: var(--bg-sidebar);
+      backdrop-filter: blur(10px);
       border-right: 1px solid var(--border-subtle);
       display: flex;
       flex-direction: column;
       padding: 16px;
       gap: 16px;
       flex-shrink: 0;
+      z-index: 10;
     }
 
     #new-chat-btn {
@@ -468,12 +486,30 @@
     #send-btn:active { transform: scale(0.95); }
     #send-btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
 
-    /* Indicador de escribiendo */
-    .typing-indicator { display: flex; gap: 5px; flex-wrap: nowrap; margin-top: 6px;}
-    .typing-indicator span { width: 6px; height: 6px; border-radius: 50%; background: var(--text-secondary); animation: bounce 1s infinite alternate; }
+    /* Indicador de escribiendo premium */
+    .typing-indicator { 
+      display: flex; 
+      gap: 6px; 
+      padding: 12px 18px; 
+      background: var(--bg-secondary); 
+      border-radius: 18px; 
+      width: fit-content; 
+      margin-top: 12px;
+      border: 1px solid var(--border-subtle);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      animation: fadeInUp 0.4s ease-out;
+    }
+    .typing-indicator span { 
+      width: 6px; 
+      height: 6px; 
+      border-radius: 50%; 
+      background: var(--accent); 
+      animation: typingBounce 1s infinite alternate; 
+      opacity: 0.7;
+    }
     .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
     .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-5px); } }
+    @keyframes typingBounce { from { transform: translateY(0); opacity: 0.4; } to { transform: translateY(-4px); opacity: 1; } }
 
     /* ── Historial vacío ── */
     .history-empty {
@@ -620,6 +656,31 @@
     //  HISTORIAL — Carga, renderizado y navegación
     // ══════════════════════════════════════════════
 
+    async function discoverModels() {
+      try {
+        const res = await fetch("/api/models/gemini");
+        const models = await res.json();
+        const select = document.getElementById("model-select");
+        
+        if (models && models.length > 0) {
+          // Limpiar opciones de gemini actuales pero mantener las otras
+          const existingGemini = select.querySelectorAll('option[value^="gemini"]');
+          existingGemini.forEach(opt => opt.remove());
+
+          models.forEach(m => {
+            const opt = document.createElement("option");
+            opt.value = m.id;
+            opt.textContent = m.name;
+            // Pre-seleccionar Gemini 1.5 Flash como default sensato si existe
+            if (m.id === 'gemini-1.5-flash' || m.id === 'gemini-flash-latest') opt.selected = true;
+            select.appendChild(opt);
+          });
+        }
+      } catch (e) {
+        console.warn("No se pudieron descubrir modelos de Gemini:", e);
+      }
+    }
+
     async function loadConversations() {
       try {
         const res = await fetch("/api/conversations");
@@ -723,7 +784,7 @@
         bubble.appendChild(label);
         
         content.classList.add("markdown-body");
-        content.innerHTML = marked.parse(text);
+        content.innerHTML = DOMPurify.sanitize(marked.parse(text));
       } else {
         // En el user message, textContent respetará los saltos de línea gracias a white-space: pre-wrap
         content.textContent = text;
@@ -852,7 +913,7 @@
                        .replace(/\\\]/g, '');
                        
           fullResponse += chunk;
-          aiMsgContent.innerHTML = marked.parse(fullResponse);
+          aiMsgContent.innerHTML = DOMPurify.sanitize(marked.parse(fullResponse));
           scrollToBottom();
         }
 
@@ -860,7 +921,11 @@
 
       } catch (err) {
         hideTyping();
-        addMessage("ai", `**Error:** ${err.message}`);
+        let errorMsg = err.message;
+        if (errorMsg.includes("Rate Limit") || errorMsg.includes("429") || errorMsg.includes("Cuota")) {
+          errorMsg = "Límite de Gemini alcanzado (5 RPM). Prueba con Groq u Ollama mientras esperas.";
+        }
+        addMessage("ai", `**Error:** ${errorMsg}`);
       } finally {
         sendBtn.disabled = false;
       }
@@ -898,7 +963,8 @@
       input.style.height = Math.min(input.scrollHeight, 200) + "px";
     });
 
-    // ── Carga inicial del historial ──
+    // ── Carga inicial ──
+    discoverModels();
     loadConversations();
   </script>
 </body>
