@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236366f1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 2L4 7l8 5 8-5-8-5zM4 12l8 5 8-5M4 17l8 5 8-5'/%3E%3C/svg%3E" />
 
   <style>
@@ -723,7 +724,7 @@
         bubble.appendChild(label);
         
         content.classList.add("markdown-body");
-        content.innerHTML = marked.parse(text);
+        content.innerHTML = DOMPurify.sanitize(marked.parse(text));
       } else {
         // En el user message, textContent respetará los saltos de línea gracias a white-space: pre-wrap
         content.textContent = text;
@@ -852,7 +853,7 @@
                        .replace(/\\\]/g, '');
                        
           fullResponse += chunk;
-          aiMsgContent.innerHTML = marked.parse(fullResponse);
+          aiMsgContent.innerHTML = DOMPurify.sanitize(marked.parse(fullResponse));
           scrollToBottom();
         }
 
