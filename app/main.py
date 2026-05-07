@@ -4,12 +4,13 @@ Ge-mini — Proyecto Antigravity 💠
 Servidor FastAPI refactorizado con Clean Architecture.
 """
 
+import os
+import uuid
+from dotenv import load_dotenv
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
-import os
-from dotenv import load_dotenv
 
 # Infraestructura y Capas
 from .infrastructure.database.session import init_db
@@ -133,7 +134,6 @@ async def chat_stream(
     service: ChatService = Depends(get_chat_service)
 ):
     """Endpoint de streaming para respuestas en tiempo real."""
-    import uuid
     conv_id = request.conversation_id or str(uuid.uuid4())
     
     try:

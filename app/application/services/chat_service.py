@@ -74,26 +74,25 @@ class ChatService:
 
 
 
-    async def _create_conversation(self, message_content: str) -> str:
+    async def _create_conversation(self, message_content: str, conv_id: Optional[str] = None) -> str:
+        """Crea una conversación. Si no se pasa conv_id, el dominio genera uno nuevo."""
         title = message_content[:50] + ("..." if len(message_content) > 50 else "")
-        new_conv = Conversation(
-            id=str(uuid.uuid4()),
-            title=title,
-            created_at=datetime.now(timezone.utc),
-            updated_at=datetime.now(timezone.utc)
-        )
+        
+        data = {
+            "title": title,
+            "created_at": datetime.now(timezone.utc),
+            "updated_at": datetime.now(timezone.utc)
+        }
+        if conv_id:
+            data["id"] = conv_id
+            
+        new_conv = Conversation(**data)
         await self.conv_repo.create(new_conv)
         return new_conv.id
 
     async def _create_conversation_with_id(self, conv_id: str, message_content: str):
-        title = message_content[:50] + ("..." if len(message_content) > 50 else "")
-        new_conv = Conversation(
-            id=conv_id,
-            title=title,
-            created_at=datetime.now(timezone.utc),
-            updated_at=datetime.now(timezone.utc)
-        )
-        await self.conv_repo.create(new_conv)
+        """Mantiene compatibilidad con llamadas existentes."""
+        await self._create_conversation(message_content, conv_id)
 
     async def _save_message(self, conversation_id: str, role: str, content: str, model: str, provider: str) -> Message:
         msg = Message(
