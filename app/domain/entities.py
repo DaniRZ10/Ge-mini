@@ -1,6 +1,6 @@
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict
-from uuid import UUID
+from pydantic import BaseModel, ConfigDict, Field
+import uuid
 
 class Message(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -16,7 +16,7 @@ class Message(BaseModel):
 class Conversation(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     
-    id: str
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     title: str
     created_at: datetime
     updated_at: datetime
