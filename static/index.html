@@ -937,9 +937,11 @@
 
     // ── Nuevo Chat ──
     function startNewChat() {
-      abortCurrentStream(); // Sí abortamos al crear chat nuevo (acción deliberada del usuario)
-      // Guardar el modelo actual antes de limpiar
+      // NO abortamos el stream — lo dejamos completar en background para que el backend guarde.
+      // Solo reseteamos la UI. El stream actual seguirá en background y actualizará el sidebar al terminar.
       localStorage.setItem("selectedModel", modelSelector.value);
+      sendBtn.disabled = false;  // Re-habilitar botón (el stream background no lo necesita)
+      hideTyping();              // Quitar el indicador visual (el stream sigue en background)
       currentConversationId = null;
       setActiveHistoryItem(null);
       messagesEl.innerHTML = "";
