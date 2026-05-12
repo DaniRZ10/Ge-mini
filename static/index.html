@@ -193,6 +193,29 @@
     .history-item:hover .delete-btn { display: flex; }
     .history-item .delete-btn:hover { color: var(--danger); background: rgba(244, 63, 94, 0.1); }
 
+    /* Badge de mensaje no leído */
+    .unread-badge {
+      font-size: 0.65rem;
+      font-weight: 700;
+      background: var(--accent);
+      color: #fff;
+      border-radius: 999px;
+      min-width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 5px;
+      flex-shrink: 0;
+      box-shadow: 0 0 6px var(--accent-glow);
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 4px var(--accent-glow); }
+      50% { box-shadow: 0 0 10px var(--accent-glow); }
+    }
+
     /* ── Model Selector Styling Mejorado ── */
     #model-selector {
       width: 100%;
@@ -556,8 +579,9 @@
     let currentConversationId = null;
     let currentAbortController = null;
     let activeSubmitToken = null;
-    let streamingConvId = null;   // ID de la conversación que se está streameando
-    let streamingModel = null;    // Modelo usado en el stream activo
+    let streamingConvId = null;      // ID de la conversación que se está streameando
+    let streamingModel = null;       // Modelo usado en el stream activo
+    const unreadConvIds = new Set(); // Conversaciones con mensajes no leídos
 
     // ── Helper: cancela stream en vuelo (solo desde startNewChat, no al navegar) ──
     function abortCurrentStream() {
@@ -636,12 +660,9 @@
       conversations.forEach(conv => {
         const item = document.createElement("div");
         item.classList.add("history-item");
-        item.dataset.convId = conv.id; // Para poder actualizar el active sin re-renderizar
-        if (conv.id === currentConversationId) {
-          item.classList.add("active");
-        }
+        item.dataset.convId = conv.id;
+        if (conv.id === currentConversationId) item.classList.add("active");
 
-        // El listener está en todo el item, no solo en el span
         item.addEventListener("click", () => loadConversation(conv.id));
 
         const titleSpan = document.createElement("span");
@@ -656,6 +677,14 @@
           e.stopPropagation();
           deleteConversation(conv.id);
         });
+
+        // Badge de no leído
+        if (unreadConvIds.has(conv.id)) {
+          const badge = document.createElement("span");
+          badge.classList.add("unread-badge");
+          badge.textContent = "1";
+          item.appendChild(badge);
+        }
 
         item.appendChild(titleSpan);
         item.appendChild(deleteBtn);
@@ -674,7 +703,11 @@
       if (conversationId === currentConversationId) return;
 
       currentConversationId = conversationId;
+      unreadConvIds.delete(conversationId); // Marcar como leído al entrar
       setActiveHistoryItem(conversationId);
+      // Quitar badge de no leído si existe en el sidebar
+      const badgeEl = historyList.querySelector(`[data-conv-id="${conversationId}"] .unread-badge`);
+      if (badgeEl) badgeEl.remove();
       messagesEl.innerHTML = "";
       if (emptyState) emptyState.style.display = "none";
 
@@ -821,8 +854,13 @@
       content.classList.add("content", "markdown-body");
       bubble.appendChild(content);
 
-      messagesEl.appendChild(bubble);
-      scrollToBottom();
+      // Solo añadir al DOM si el usuario sigue viendo esta conversación
+      // Si ha navegado a otro chat, escribir en un nodo desconectado (sin afectar la vista actual)
+      if (currentConversationId === streamingConvId) {
+        messagesEl.appendChild(bubble);
+        scrollToBottom();
+      }
+
       return content;
     }
 
@@ -905,8 +943,8 @@
         streamingModel = null;
         await loadConversations();
 
-        // Si el usuario está viendo la conversación que acaba de terminar de streamear,
-        // recargar sus mensajes desde la DB para mostrar la respuesta de la IA guardada
+        // Si el usuario está viendo la conversación que acaba de terminar:
+        // recargar mensajes desde DB para mostrar la respuesta guardada
         if (streamedConvId && currentConversationId === streamedConvId) {
           hideTyping();
           const refreshRes = await fetch(`/api/conversations/${streamedConvId}/messages`);
@@ -916,6 +954,11 @@
             addMessage(msg.role === "user" ? "user" : "ai", msg.content, false, msg.model);
           });
           scrollToBottom();
+        } else if (streamedConvId) {
+          // El usuario está en otro chat: marcar el chat streameado como no leído
+          unreadConvIds.add(streamedConvId);
+          // Re-renderizar el historial para mostrar el badge
+          loadConversations();
         }
 
       } catch (err) {
