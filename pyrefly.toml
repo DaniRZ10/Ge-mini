@@ -1,1 +1,4 @@
-python-interpreter = ".venv/Scripts/python.exe"
+# Pyrefly configuration — Ge-mini
+# Apunta al intérprete del venv para que pyrefly encuentre
+# pydantic, pytest y demás dependencias del proyecto.
+python_interpreter = ".venv/Scripts/python.exe"
