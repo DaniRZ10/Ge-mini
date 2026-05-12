@@ -114,3 +114,99 @@ async def _get_test_message_repo():
     """Repositorio de mensajes apuntando a la BD de test."""
     async with TestSessionLocal() as session:
         yield SqlAlchemyMessageRepository(session)
+
+
+# ─── Helpers para Spec 1 (Model Switch) y Spec 2 (Chat Persistence) ───
+# TASK-02: fixtures compartidas para los nuevos test files.
+# No duplican nada de lo anterior.
+
+class ControllableProvider(AiProvider):
+    """
+    Provider configurable para tests.
+    - `response`: texto que devuelve send_message.
+    - `side_effect`: si se establece, send_message lanza esa excepción.
+    - `call_log`: lista de tuplas (method, model_id) para verificar orden.
+    - `on_send_hook`: callable opcional que se invoca dentro de send_message
+      (útil para simular un switch de modelo mientras la request está en vuelo).
+    """
+
+    def __init__(
+        self,
+        provider_name: str = "test",
+        response: str = "respuesta controlada",
+        side_effect: Exception | None = None,
+    ):
+        self._name = provider_name
+        self._response = response
+        self._side_effect = side_effect
+        self.call_log: list[tuple[str, str]] = []  # (method, model_id)
+        self.on_send_hook = None  # callable() invocado en send_message
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    async def send_message(self, message: str, history: List[Message], model_id: str) -> str:
+        self.call_log.append(("send_message", model_id))
+        if self.on_send_hook:
+            self.on_send_hook()
+        if self._side_effect:
+            raise self._side_effect
+        return self._response
+
+    async def send_message_stream(self, message: str, history: List[Message], model_id: str) -> AsyncIterator[str]:
+        self.call_log.append(("send_message_stream", model_id))
+        yield self._response
+
+
+class SwitchableFactory:
+    """
+    Fábrica de providers con estado mutable.
+    Simula el concepto de 'modelo activo' para los tests de Spec 1:
+    get_provider() siempre devuelve el provider actualmente registrado,
+    y switch_to() permite cambiar ese provider en cualquier momento.
+    """
+
+    def __init__(self, initial_provider: AiProvider):
+        self._provider = initial_provider
+
+    def switch_to(self, new_provider: AiProvider) -> None:
+        """Cambia el provider activo (simula cambio de modelo por el usuario)."""
+        self._provider = new_provider
+
+    def get_provider(self, model_id: str) -> AiProvider:
+        return self._provider
+
+
+@pytest.fixture
+def provider_a() -> ControllableProvider:
+    """Provider A — responde con éxito, registra sus llamadas."""
+    return ControllableProvider(provider_name="provider_a", response="Respuesta del modelo A")
+
+
+@pytest.fixture
+def provider_b() -> ControllableProvider:
+    """Provider B — responde con éxito, registra sus llamadas."""
+    return ControllableProvider(provider_name="provider_b", response="Respuesta del modelo B")
+
+
+@pytest.fixture
+def provider_c() -> ControllableProvider:
+    """Provider C — responde con éxito, registra sus llamadas."""
+    return ControllableProvider(provider_name="provider_c", response="Respuesta del modelo C")
+
+
+@pytest.fixture
+def local_down_provider() -> ControllableProvider:
+    """Provider local caído — lanza ConnectionError al intentar send_message."""
+    import httpx
+    return ControllableProvider(
+        provider_name="ollama",
+        side_effect=httpx.ConnectError("Connection refused: Ollama no está disponible"),
+    )
+
+
+@pytest.fixture
+def cloud_provider() -> ControllableProvider:
+    """Provider cloud de respaldo, siempre disponible."""
+    return ControllableProvider(provider_name="gemini", response="Respuesta desde la nube")
