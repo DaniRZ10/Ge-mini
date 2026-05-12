@@ -554,13 +554,15 @@
 
     // ── Estado de la aplicación ──
     let currentConversationId = null;
-    let currentAbortController = null; // Controla y cancela streams en vuelo
+    let currentAbortController = null;
+    let activeSubmitToken = null; // Guard para evitar que finally de streams viejos interfieran
 
-    // ── Helper: cancela cualquier stream activo ──
+    // ── Helper: cancela stream en vuelo (solo desde startNewChat, no al navegar) ──
     function abortCurrentStream() {
       if (currentAbortController) {
         currentAbortController.abort();
         currentAbortController = null;
+        activeSubmitToken = null;
         hideTyping();
         sendBtn.disabled = false;
       }
@@ -665,18 +667,13 @@
     }
 
     async function loadConversation(conversationId) {
-      // Evitar re-cargar la misma conversación
       if (conversationId === currentConversationId) return;
 
-      // Cancelar cualquier stream en curso antes de cambiar de chat
-      abortCurrentStream();
-
+      // NO abortamos el stream — dejamos que termine en segundo plano y guarde correctamente.
+      // Solo actualizamos la vista.
       currentConversationId = conversationId;
-
-      // Marcar el item activo inmediatamente, sin re-renderizar la lista
       setActiveHistoryItem(conversationId);
 
-      // Limpiar mensajes actuales
       messagesEl.innerHTML = "";
       if (emptyState) emptyState.style.display = "none";
 
@@ -821,28 +818,32 @@
       const text = input.value.trim();
       if (!text) return;
 
-      // Capturar el modelo AHORA, antes de cualquier async/navegación
+      // Token único para esta llamada — evita que un finally de stream anterior interfiera
+      const myToken = Symbol();
+      activeSubmitToken = myToken;
+
       const modelAtSubmit = modelSelector.value;
 
       // Cancelar stream anterior si lo hubiera
-      abortCurrentStream();
+      if (currentAbortController) {
+        currentAbortController.abort();
+        currentAbortController = null;
+      }
       currentAbortController = new AbortController();
       const { signal } = currentAbortController;
 
       addMessage("user", input.value);
-      
       input.value = "";
       input.style.height = "auto";
       input.focus();
       sendBtn.disabled = true;
-      
       showTyping();
 
       try {
         const res = await fetch("/api/chat/stream", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ 
+          body: JSON.stringify({
             message: text,
             model: modelAtSubmit,
             conversation_id: currentConversationId
@@ -852,11 +853,8 @@
 
         if (!res.ok) throw new Error("Error en la respuesta del servidor");
 
-        // Capturar el ID de conversación para mantener la memoria
         const headerId = res.headers.get("X-Conversation-Id");
-        if (headerId) {
-          currentConversationId = headerId;
-        }
+        if (headerId) currentConversationId = headerId;
 
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
@@ -866,23 +864,19 @@
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
-          
-          // Al recibir el primer chunk, quitamos los puntitos y creamos la burbuja
-          // Usamos modelAtSubmit (capturado al inicio), no modelSelector.value actual
+
           if (!aiMsgContent) {
             hideTyping();
             aiMsgContent = createStreamingAiBubble(modelAtSubmit);
           }
 
           let chunk = decoder.decode(value, { stream: true });
-          
-          // Filtro de seguridad para limpiar símbolos LaTeX rebeldes
           chunk = chunk.replace(/\\times/g, 'x')
                        .replace(/\\text\{([^}]+)\}/g, '$1')
                        .replace(/\\cdot/g, '·')
                        .replace(/\\\[/g, '')
                        .replace(/\\\]/g, '');
-                       
+
           fullResponse += chunk;
           aiMsgContent.innerHTML = DOMPurify.sanitize(marked.parse(fullResponse));
           scrollToBottom();
@@ -892,7 +886,7 @@
         await loadConversations();
 
       } catch (err) {
-        if (err.name === 'AbortError') return; // Navegación intencionada, ignorar silenciosamente
+        if (err.name === 'AbortError') return;
         hideTyping();
         let errorMsg = err.message;
         if (errorMsg.includes("Rate Limit") || errorMsg.includes("429") || errorMsg.includes("Cuota")) {
@@ -900,13 +894,19 @@
         }
         addMessage("ai", `**Error:** ${errorMsg}`);
       } finally {
-        sendBtn.disabled = false;
+        // Solo restauramos el estado UI si somos el submit más reciente
+        if (activeSubmitToken === myToken) {
+          sendBtn.disabled = false;
+          activeSubmitToken = null;
+        }
       }
     }
 
     // ── Nuevo Chat ──
     function startNewChat() {
-      abortCurrentStream(); // Cancelar stream en curso antes de limpiar la vista
+      abortCurrentStream(); // Sí abortamos al crear chat nuevo (acción deliberada del usuario)
+      // Guardar el modelo actual antes de limpiar
+      localStorage.setItem("selectedModel", modelSelector.value);
       currentConversationId = null;
       setActiveHistoryItem(null);
       messagesEl.innerHTML = "";
