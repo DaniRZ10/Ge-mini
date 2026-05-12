@@ -60,19 +60,15 @@
       to { opacity: 1; transform: translateX(0); }
     }
 
-    .animate-fade-in {
-      animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-    }
-
     /* ── MODO CLARO PREMIUM ── */
     body.light-mode {
-      --bg-primary:    #f8fafc;
-      --bg-secondary:  #ffffff;
-      --bg-sidebar:    rgba(241, 245, 249, 0.9);
+      --bg-primary:    #ffffff;
+      --bg-secondary:  #f1f5f9;
+      --bg-sidebar:    rgba(241, 245, 249, 0.95);
       --bg-input:      #ffffff;
-      --border-subtle: rgba(0, 0, 0, 0.06);
+      --border-subtle: rgba(0, 0, 0, 0.12);
       --text-primary:  #0f172a;
-      --text-secondary:#64748b;
+      --text-secondary:#475569;
       --msg-user-bg:   linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
       --msg-ai-bg:     transparent;
     }
@@ -129,7 +125,7 @@
       text-transform: uppercase;
       letter-spacing: 0.1em;
       margin-top: 10px;
-      opacity: 0.7;
+      opacity: 0.9; /* Más opacidad para contraste */
     }
 
     .history-list {
@@ -163,11 +159,16 @@
       color: var(--text-primary);
       transform: translateX(4px);
     }
+    
+    body.light-mode .history-item:hover {
+      background: rgba(0, 0, 0, 0.05);
+    }
 
     .history-item.active {
       background: var(--accent-glow);
       color: var(--accent);
       border-color: rgba(129, 140, 248, 0.3);
+      font-weight: 500;
     }
 
     .history-item .title {
@@ -194,24 +195,44 @@
     .history-item:hover .delete-btn { display: flex; }
     .history-item .delete-btn:hover { color: var(--danger); background: rgba(244, 63, 94, 0.1); }
 
-    /* ── Model Selector Styling ── */
+    /* ── Model Selector Styling Mejorado ── */
     #model-selector {
       width: 100%;
       background: var(--bg-input);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius);
       color: var(--text-primary);
-      padding: 12px;
+      padding: 12px 16px;
       font-family: var(--font-main);
       font-size: 0.9rem;
+      font-weight: 500;
       outline: none;
       cursor: pointer;
       appearance: none;
-      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23818cf8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
       background-repeat: no-repeat;
-      background-position: right 12px center;
-      background-size: 14px;
-      transition: var(--transition);
+      background-position: right 14px center;
+      background-size: 16px;
+      transition: all var(--transition);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    #model-selector:hover {
+      border-color: var(--accent);
+      box-shadow: 0 4px 12px var(--accent-glow);
+    }
+
+    #model-selector optgroup {
+      background: var(--bg-secondary);
+      color: var(--accent);
+      font-weight: 700;
+      padding: 10px;
+    }
+
+    #model-selector option {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      padding: 12px;
     }
 
     /* ── MAIN VIEW ── */
@@ -226,7 +247,7 @@
     }
 
     body.light-mode #chat-view {
-      background: radial-gradient(circle at 50% -20%, #f1f5f9 0%, var(--bg-primary) 80%);
+      background: radial-gradient(circle at 50% -20%, #f1f5f9 0%, var(--bg-primary) 100%);
     }
 
     #chat-header {
@@ -240,7 +261,7 @@
       z-index: 5;
     }
 
-    body.light-mode #chat-header { background: rgba(248, 250, 252, 0.7); }
+    body.light-mode #chat-header { background: rgba(255, 255, 255, 0.8); }
 
     .logo-dot {
       width: 24px; height: 24px;
@@ -258,6 +279,11 @@
       cursor: pointer;
       color: var(--text-primary);
       transition: var(--transition);
+    }
+    
+    #theme-toggle:hover {
+      background: var(--accent-glow);
+      border-color: var(--accent);
     }
 
     /* ── MESSAGES ── */
@@ -293,6 +319,11 @@
       box-shadow: 0 4px 15px rgba(0,0,0,0.2);
       max-width: 85%;
       white-space: pre-wrap;
+      color: #fff; /* Siempre blanco para el gradiente oscuro */
+    }
+    
+    body.light-mode .message.user .content {
+      color: #1e293b;
     }
 
     .message.ai { align-items: flex-start; }
@@ -314,6 +345,8 @@
     .markdown-body { display: flex; flex-direction: column; gap: 14px; width: 100%; }
     .markdown-body code { background: rgba(129, 140, 248, 0.1); padding: 3px 6px; border-radius: 6px; color: var(--accent); font-family: monospace; }
     .markdown-body pre { background: #010204; padding: 20px; border-radius: 12px; border: 1px solid var(--border-subtle); overflow-x: auto; }
+    
+    body.light-mode .markdown-body pre { background: #f8fafc; }
 
     #empty-state {
       margin-top: 25vh;
@@ -350,6 +383,8 @@
       transition: all var(--transition);
     }
     
+    body.light-mode #input-area { box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
+    
     #input-area:focus-within { border-color: var(--accent); box-shadow: 0 10px 40px var(--accent-glow); }
 
     #user-input {
@@ -374,6 +409,7 @@
       display: flex; align-items: center; justify-content: center;
       transition: all var(--transition);
       box-shadow: 0 4px 12px var(--accent-glow);
+      flex-shrink: 0;
     }
     #send-btn:hover { background: var(--accent-hover); transform: scale(1.05); }
     #send-btn:active { transform: scale(0.95); }
@@ -433,21 +469,16 @@
       <div class="sidebar-section-title">Modelo de IA</div>
       <select id="model-selector">
         <optgroup label="Google Gemini">
-          <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
-          <option value="gemini-flash-latest">Gemini 1.5 Flash</option>
-          <option value="gemini-pro-latest">Gemini 1.5 Pro</option>
-          <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+          <option value="gemini-1.5-flash" selected>Gemini 1.5 Flash</option>
+          <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+          <option value="gemini-1.5-flash-8b">Gemini 1.5 Flash-8B</option>
         </optgroup>
         <optgroup label="IA Local (Ollama)">
           <option value="qwen2.5-coder:3b">Qwen 2.5 Coder (3B)</option>
-          <option value="qwen2.5-coder:1.5b">Qwen 2.5 Coder (1.5B)</option>
-          <option value="deepseek-coder:1.3b">DeepSeek Coder (1.3B)</option>
-          <option value="gemma2:2b">Gemma 2 (2B)</option>
-          <option value="phi3:mini">Phi-3 Mini (3.8B)</option>
-          <option value="gemma3:4b">Gemma 3 (4B) ⚠️</option>
+          <option value="llama3.2:3b">Llama 3.2 (3B)</option>
         </optgroup>
         <optgroup label="Open Source (Groq)">
-          <option value="llama-3.3-70b-versatile" selected>Llama 3.3 (70B)</option>
+          <option value="llama-3.3-70b-versatile">Llama 3.3 (70B)</option>
           <option value="llama-3.1-8b-instant">Llama 3.1 (8B)</option>
         </optgroup>
       </select>
@@ -542,38 +573,6 @@
       localStorage.setItem("selectedModel", modelSelector.value);
     });
 
-    initTheme();
-    initModel();
-
-    // ══════════════════════════════════════════════
-    //  HISTORIAL — Carga, renderizado y navegación
-    // ══════════════════════════════════════════════
-
-    async function discoverModels() {
-      try {
-        const res = await fetch("/api/models/gemini");
-        const models = await res.json();
-        const select = document.getElementById("model-selector");
-        
-        if (models && models.length > 0) {
-          // Mantener los modelos locales y de groq, solo actualizar Gemini si hay nuevos
-          const existingGeminiGroup = select.querySelector('optgroup[label="Google Gemini"]');
-          if (existingGeminiGroup) {
-            existingGeminiGroup.innerHTML = "";
-            models.forEach(m => {
-              const opt = document.createElement("option");
-              opt.value = m.id;
-              opt.textContent = m.name;
-              if (m.id === 'gemini-1.5-flash' || m.id === 'gemini-flash-latest') opt.selected = true;
-              existingGeminiGroup.appendChild(opt);
-            });
-          }
-        }
-      } catch (e) {
-        console.warn("No se pudieron descubrir modelos de Gemini:", e);
-      }
-    }
-
     // Auto-resize textarea
     input.addEventListener("input", () => {
       input.style.height = "auto";
@@ -589,6 +588,11 @@
         console.error("Error cargando historial:", e);
       }
     }
+
+    // Inicialización
+    initTheme();
+    initModel();
+    loadConversations();
 
     function renderHistoryList(conversations) {
       historyList.innerHTML = "";
