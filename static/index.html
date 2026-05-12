@@ -556,7 +556,8 @@
     let currentConversationId = null;
     let currentAbortController = null;
     let activeSubmitToken = null;
-    let streamingConvId = null; // ID de la conversación que está siendo streamada ahora mismo
+    let streamingConvId = null;   // ID de la conversación que se está streameando
+    let streamingModel = null;    // Modelo usado en el stream activo
 
     // ── Helper: cancela stream en vuelo (solo desde startNewChat, no al navegar) ──
     function abortCurrentStream() {
@@ -564,6 +565,8 @@
         currentAbortController.abort();
         currentAbortController = null;
         activeSubmitToken = null;
+        streamingConvId = null;
+        streamingModel = null;
         hideTyping();
         sendBtn.disabled = false;
       }
@@ -683,16 +686,22 @@
           addMessage(msg.role === "user" ? "user" : "ai", msg.content, false, msg.model);
         });
 
-        // Si esta conversación está siendo streamada ahora mismo, mostrar el indicador de pensando
+        // Si esta conversación está siendo streamada ahora mismo:
+        // 1. Mostrar el indicador de pensando
+        // 2. Restaurar el modelo correcto (no el del chat anterior)
         if (conversationId === streamingConvId) {
+          if (streamingModel) {
+            modelSelector.value = streamingModel;
+            localStorage.setItem("selectedModel", streamingModel);
+          }
           showTyping();
-        }
-
-        // Restaurar el modelo del último mensaje IA de esta conversación
-        const lastAiMsg = [...messages].reverse().find(m => m.role !== "user" && m.model);
-        if (lastAiMsg) {
-          modelSelector.value = lastAiMsg.model;
-          localStorage.setItem("selectedModel", lastAiMsg.model);
+        } else {
+          // Restaurar el modelo del último mensaje IA de esta conversación
+          const lastAiMsg = [...messages].reverse().find(m => m.role !== "user" && m.model);
+          if (lastAiMsg) {
+            modelSelector.value = lastAiMsg.model;
+            localStorage.setItem("selectedModel", lastAiMsg.model);
+          }
         }
 
         scrollToBottom();
@@ -860,9 +869,8 @@
         if (headerId) {
           currentConversationId = headerId;
           streamingConvId = headerId;
-          // Actualizar sidebar AHORA (no esperar al final del stream)
-          // para que la conversación aparezca inmediatamente en el historial
-          loadConversations();
+          streamingModel = modelAtSubmit; // Guardar el modelo para restaurarlo si el usuario navega aqui
+          loadConversations(); // Actualizar sidebar AHORA (no esperar al final del stream)
         }
 
         const reader = res.body.getReader();
@@ -894,6 +902,7 @@
         currentAbortController = null;
         const streamedConvId = streamingConvId;
         streamingConvId = null;
+        streamingModel = null;
         await loadConversations();
 
         // Si el usuario está viendo la conversación que acaba de terminar de streamear,
