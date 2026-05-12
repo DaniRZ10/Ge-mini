@@ -554,6 +554,17 @@
 
     // ── Estado de la aplicación ──
     let currentConversationId = null;
+    let currentAbortController = null; // Controla y cancela streams en vuelo
+
+    // ── Helper: cancela cualquier stream activo ──
+    function abortCurrentStream() {
+      if (currentAbortController) {
+        currentAbortController.abort();
+        currentAbortController = null;
+        hideTyping();
+        sendBtn.disabled = false;
+      }
+    }
 
     // ── Lógica de Modo Claro/Oscuro ──
     function initTheme() {
@@ -656,6 +667,10 @@
     async function loadConversation(conversationId) {
       // Evitar re-cargar la misma conversación
       if (conversationId === currentConversationId) return;
+
+      // Cancelar cualquier stream en curso antes de cambiar de chat
+      abortCurrentStream();
+
       currentConversationId = conversationId;
 
       // Marcar el item activo inmediatamente, sin re-renderizar la lista
@@ -806,6 +821,14 @@
       const text = input.value.trim();
       if (!text) return;
 
+      // Capturar el modelo AHORA, antes de cualquier async/navegación
+      const modelAtSubmit = modelSelector.value;
+
+      // Cancelar stream anterior si lo hubiera
+      abortCurrentStream();
+      currentAbortController = new AbortController();
+      const { signal } = currentAbortController;
+
       addMessage("user", input.value);
       
       input.value = "";
@@ -821,9 +844,10 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ 
             message: text,
-            model: modelSelector.value,
+            model: modelAtSubmit,
             conversation_id: currentConversationId
           }),
+          signal,
         });
 
         if (!res.ok) throw new Error("Error en la respuesta del servidor");
@@ -844,9 +868,10 @@
           if (done) break;
           
           // Al recibir el primer chunk, quitamos los puntitos y creamos la burbuja
+          // Usamos modelAtSubmit (capturado al inicio), no modelSelector.value actual
           if (!aiMsgContent) {
             hideTyping();
-            aiMsgContent = createStreamingAiBubble(modelSelector.value);
+            aiMsgContent = createStreamingAiBubble(modelAtSubmit);
           }
 
           let chunk = decoder.decode(value, { stream: true });
@@ -863,9 +888,11 @@
           scrollToBottom();
         }
 
+        currentAbortController = null;
         await loadConversations();
 
       } catch (err) {
+        if (err.name === 'AbortError') return; // Navegación intencionada, ignorar silenciosamente
         hideTyping();
         let errorMsg = err.message;
         if (errorMsg.includes("Rate Limit") || errorMsg.includes("429") || errorMsg.includes("Cuota")) {
@@ -879,13 +906,15 @@
 
     // ── Nuevo Chat ──
     function startNewChat() {
+      abortCurrentStream(); // Cancelar stream en curso antes de limpiar la vista
       currentConversationId = null;
+      setActiveHistoryItem(null);
       messagesEl.innerHTML = "";
       if (emptyState) {
         emptyState.style.display = "flex";
         messagesEl.appendChild(emptyState);
       }
-      loadConversations(); // Actualizar sidebar para quitar active
+      loadConversations();
     }
 
     newChatBtn.addEventListener("click", () => startNewChat());
@@ -910,7 +939,6 @@
     });
 
     // ── Carga inicial ──
-    discoverModels();
     loadConversations();
   </script>
 </body>
