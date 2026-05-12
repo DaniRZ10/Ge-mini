@@ -7,7 +7,7 @@ class ChatRequest(BaseModel):
 
 class ChatResponse(BaseModel):
     response: str
-    provider: str
+    provider: str | None
     conversation_id: str
 
 class ConversationOut(BaseModel):
@@ -17,7 +17,7 @@ class ConversationOut(BaseModel):
     updated_at: str
 
 class MessageOut(BaseModel):
-    id: int
+    id: int | None
     role: str
     content: str
     model: str | None

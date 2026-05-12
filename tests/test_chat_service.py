@@ -43,15 +43,21 @@ async def test_start_chat_reuses_conversation(db_session):
 
 
 @pytest.mark.asyncio
-async def test_provider_name_routing():
-    """Verifica que _get_provider_name identifica correctamente cada proveedor."""
-    service = ChatService.__new__(ChatService)
+async def test_provider_routing_via_factory():
+    """Verifica que la fábrica enruta y los providers devuelven el nombre correcto."""
+    from app.infrastructure.ai.factory import AiProviderFactory
+    import os
+    from unittest.mock import patch
 
-    assert service._get_provider_name("gemini-2.0-flash") == "gemini"
-    assert service._get_provider_name("gemini-2.5-flash") == "gemini"
-    assert service._get_provider_name("qwen2.5-coder:1.5b") == "ollama"
-    assert service._get_provider_name("deepseek-coder:1.3b") == "ollama"
-    assert service._get_provider_name("llama-3.3-70b-versatile") == "groq"
+    with patch.dict(os.environ, {"GEMINI_API_KEY": "fake", "GROQ_API_KEY": "fake"}):
+        factory = AiProviderFactory(system_prompt="test")
+        
+        # Caso Gemini
+        assert factory.get_provider("gemini-2.0-flash").name == "gemini"
+        # Caso Ollama (local)
+        assert factory.get_provider("qwen2.5-coder:1.5b").name == "ollama"
+        # Caso Groq
+        assert factory.get_provider("llama-3.3-70b-versatile").name == "groq"
 
 
 @pytest.mark.asyncio
