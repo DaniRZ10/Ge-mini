@@ -22,7 +22,11 @@ from app.application.services.chat_service import ChatService
 
 class FakeProvider(AiProvider):
     """Proveedor de IA falso para tests. Devuelve respuestas predecibles."""
-    
+
+    @property
+    def name(self) -> str:
+        return "fake"
+
     async def send_message(self, message: str, history: List[Message], model_id: str) -> str:
         return f"Respuesta fake para: {message}"
 
