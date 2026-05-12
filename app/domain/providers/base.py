@@ -15,6 +15,6 @@ class AiProvider(ABC):
         pass
 
     @abstractmethod
-    async def send_message_stream(self, message: str, history: List[Message], model_id: str) -> AsyncIterator[str]:
+    def send_message_stream(self, message: str, history: List[Message], model_id: str) -> AsyncIterator[str]:
         """Envía un mensaje y devuelve un generador asíncrono de fragmentos de texto."""
         pass

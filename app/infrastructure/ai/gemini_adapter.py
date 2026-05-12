@@ -58,7 +58,10 @@ class GeminiAdapter(AiProvider):
         except Exception as e:
             return f"Error en Gemini SDK: {str(e)}"
 
-    async def send_message_stream(self, message: str, history: List[Message], model_id: str) -> AsyncIterator[str]:
+    def send_message_stream(self, message: str, history: List[Message], model_id: str) -> AsyncIterator[str]:
+        return self._send_message_stream_gen(message, history, model_id)
+
+    async def _send_message_stream_gen(self, message: str, history: List[Message], model_id: str) -> AsyncIterator[str]:
         try:
             model = genai.GenerativeModel(
                 model_name=model_id,

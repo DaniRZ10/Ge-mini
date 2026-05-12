@@ -35,7 +35,7 @@ class SqlAlchemyConversationRepository(ConversationRepository):
     async def delete(self, conversation_id: str) -> bool:
         query = delete(ConversationModel).where(ConversationModel.id == conversation_id)
         result = await self.session.execute(query)
-        return result.rowcount > 0
+        return result.rowcount > 0  # type: ignore
 
     async def touch(self, conversation_id: str):
         now = datetime.now(timezone.utc)
