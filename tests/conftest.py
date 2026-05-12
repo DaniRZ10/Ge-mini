@@ -217,3 +217,39 @@ def local_down_provider():
 @pytest.fixture
 def cloud_provider():
     return ControllableProvider(provider_name="gemini", response="Respuesta desde la nube")
+
+
+@pytest.fixture
+def override_chat_service():
+    """
+    Fixture de contexto para inyectar factories en get_chat_service.
+    Simplifica el patrón try/finally repetido en los tests.
+
+    Uso:
+        factory = SwitchableFactory(initial_provider=provider_a)
+        with override_chat_service(factory):
+            response = await client.post("/api/chat", ...)
+    """
+    from app.main import app
+
+    class OverrideContext:
+        def __init__(self, factory: AiProviderFactory):
+            self.factory = factory
+
+        async def __aenter__(self):
+            async def _override():
+                async with TestSessionLocal() as session:
+                    conv_repo = SqlAlchemyConversationRepository(session)
+                    msg_repo = SqlAlchemyMessageRepository(session)
+                    yield ChatService(session, conv_repo, msg_repo, self.factory)
+
+            app.dependency_overrides[get_chat_service] = _override
+            return self
+
+        async def __aexit__(self, _exc_type, _exc_val, _exc_tb):
+            app.dependency_overrides.pop(get_chat_service, None)
+
+    def _make_context(factory: AiProviderFactory):
+        return OverrideContext(factory)
+
+    return _make_context
