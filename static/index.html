@@ -555,7 +555,8 @@
     // ── Estado de la aplicación ──
     let currentConversationId = null;
     let currentAbortController = null;
-    let activeSubmitToken = null; // Guard para evitar que finally de streams viejos interfieran
+    let activeSubmitToken = null;
+    let streamingConvId = null; // ID de la conversación que está siendo streamada ahora mismo
 
     // ── Helper: cancela stream en vuelo (solo desde startNewChat, no al navegar) ──
     function abortCurrentStream() {
@@ -669,11 +670,8 @@
     async function loadConversation(conversationId) {
       if (conversationId === currentConversationId) return;
 
-      // NO abortamos el stream — dejamos que termine en segundo plano y guarde correctamente.
-      // Solo actualizamos la vista.
       currentConversationId = conversationId;
       setActiveHistoryItem(conversationId);
-
       messagesEl.innerHTML = "";
       if (emptyState) emptyState.style.display = "none";
 
@@ -684,6 +682,11 @@
         messages.forEach(msg => {
           addMessage(msg.role === "user" ? "user" : "ai", msg.content, false, msg.model);
         });
+
+        // Si esta conversación está siendo streamada ahora mismo, mostrar el indicador de pensando
+        if (conversationId === streamingConvId) {
+          showTyping();
+        }
 
         // Restaurar el modelo del último mensaje IA de esta conversación
         const lastAiMsg = [...messages].reverse().find(m => m.role !== "user" && m.model);
@@ -854,7 +857,13 @@
         if (!res.ok) throw new Error("Error en la respuesta del servidor");
 
         const headerId = res.headers.get("X-Conversation-Id");
-        if (headerId) currentConversationId = headerId;
+        if (headerId) {
+          currentConversationId = headerId;
+          streamingConvId = headerId;
+          // Actualizar sidebar AHORA (no esperar al final del stream)
+          // para que la conversación aparezca inmediatamente en el historial
+          loadConversations();
+        }
 
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
@@ -883,7 +892,22 @@
         }
 
         currentAbortController = null;
+        const streamedConvId = streamingConvId;
+        streamingConvId = null;
         await loadConversations();
+
+        // Si el usuario está viendo la conversación que acaba de terminar de streamear,
+        // recargar sus mensajes desde la DB para mostrar la respuesta de la IA guardada
+        if (streamedConvId && currentConversationId === streamedConvId) {
+          hideTyping();
+          const refreshRes = await fetch(`/api/conversations/${streamedConvId}/messages`);
+          const refreshMsgs = await refreshRes.json();
+          messagesEl.innerHTML = "";
+          refreshMsgs.forEach(msg => {
+            addMessage(msg.role === "user" ? "user" : "ai", msg.content, false, msg.model);
+          });
+          scrollToBottom();
+        }
 
       } catch (err) {
         if (err.name === 'AbortError') return;
