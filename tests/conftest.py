@@ -16,6 +16,7 @@ from app.infrastructure.database.models import Base
 from app.api.dependencies import get_conversation_repo, get_message_repo, get_chat_service
 from app.infrastructure.database.repositories import SqlAlchemyConversationRepository, SqlAlchemyMessageRepository
 from app.application.services.chat_service import ChatService
+from app.infrastructure.ai.factory import AiProviderFactory
 
 
 # ─── Fake AI Provider (sin red, sin APIs) ───
@@ -36,11 +37,11 @@ class FakeProvider(AiProvider):
             yield word + " "
 
 
-class FakeProviderFactory:
+class FakeProviderFactory(AiProviderFactory):
     """Fábrica que siempre devuelve el FakeProvider."""
     
     def __init__(self, system_prompt: str = ""):
-        self.system_prompt = system_prompt
+        super().__init__(system_prompt)
     
     def get_provider(self, model_id: str) -> AiProvider:
         return FakeProvider()
@@ -163,7 +164,7 @@ class ControllableProvider(AiProvider):
         yield self._response
 
 
-class SwitchableFactory:
+class SwitchableFactory(AiProviderFactory):
     """
     Fábrica de providers con estado mutable.
     Simula el concepto de 'modelo activo' para los tests de Spec 1:
@@ -172,6 +173,7 @@ class SwitchableFactory:
     """
 
     def __init__(self, initial_provider: AiProvider):
+        super().__init__("")  # System prompt vacío para tests de switch
         self._provider = initial_provider
 
     def switch_to(self, new_provider: AiProvider) -> None:
