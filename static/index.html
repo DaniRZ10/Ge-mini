@@ -698,11 +698,18 @@
     //  MENSAJES — Renderizado
     // ══════════════════════════════════════════════
 
+    function getModelDisplayName(modelId) {
+      if (!modelId) return null;
+      const option = modelSelector.querySelector(`option[value="${CSS.escape(modelId)}"]`);
+      return option ? option.textContent.trim() : modelId;
+    }
+
     function buildAiLabel(modelName) {
       const label = document.createElement("div");
       label.classList.add("label");
-      const badgeHtml = modelName
-        ? `<span class="model-badge">${modelName}</span>`
+      const displayName = getModelDisplayName(modelName);
+      const badgeHtml = displayName
+        ? `<span class="model-badge">${displayName}</span>`
         : '';
       label.innerHTML = `<svg style="width:12px; height:12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L4 7l8 5 8-5-8-5zM4 12l8 5 8-5M4 17l8 5 8-5"/></svg> Ge-mini ${badgeHtml}`;
       return label;
