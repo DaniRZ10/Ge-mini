@@ -673,6 +673,13 @@
           addMessage(msg.role === "user" ? "user" : "ai", msg.content, false, msg.model);
         });
 
+        // Restaurar el modelo del último mensaje IA de esta conversación
+        const lastAiMsg = [...messages].reverse().find(m => m.role !== "user" && m.model);
+        if (lastAiMsg) {
+          modelSelector.value = lastAiMsg.model;
+          localStorage.setItem("selectedModel", lastAiMsg.model);
+        }
+
         scrollToBottom();
       } catch (e) {
         console.error("Error cargando conversación:", e);
