@@ -342,6 +342,19 @@
     
     body.light-mode .markdown-body pre { background: #f8fafc; }
 
+    /* Badge del modelo en mensajes IA */
+    .model-badge {
+      font-size: 0.65rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      background: rgba(129, 140, 248, 0.08);
+      border: 1px solid rgba(129, 140, 248, 0.15);
+      border-radius: 6px;
+      padding: 1px 7px;
+      letter-spacing: 0.03em;
+      opacity: 0.85;
+    }
+
     #empty-state {
       margin-top: 25vh;
       display: flex; flex-direction: column; align-items: center; gap: 20px;
@@ -657,7 +670,7 @@
         const messages = await res.json();
 
         messages.forEach(msg => {
-          addMessage(msg.role === "user" ? "user" : "ai", msg.content, false);
+          addMessage(msg.role === "user" ? "user" : "ai", msg.content, false, msg.model);
         });
 
         scrollToBottom();
@@ -685,7 +698,17 @@
     //  MENSAJES — Renderizado
     // ══════════════════════════════════════════════
 
-    function addMessage(role, text, animate = true) {
+    function buildAiLabel(modelName) {
+      const label = document.createElement("div");
+      label.classList.add("label");
+      const badgeHtml = modelName
+        ? `<span class="model-badge">${modelName}</span>`
+        : '';
+      label.innerHTML = `<svg style="width:12px; height:12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L4 7l8 5 8-5-8-5zM4 12l8 5 8-5M4 17l8 5 8-5"/></svg> Ge-mini ${badgeHtml}`;
+      return label;
+    }
+
+    function addMessage(role, text, animate = true, modelName = null) {
       if (emptyState) emptyState.style.display = 'none';
 
       const bubble = document.createElement("div");
@@ -696,15 +719,10 @@
       content.classList.add("content");
 
       if (role === "ai") {
-        const label = document.createElement("div");
-        label.classList.add("label");
-        label.innerHTML = `<svg style="width:12px; height:12px; margin-right:4px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L4 7l8 5 8-5-8-5zM4 12l8 5 8-5M4 17l8 5 8-5"/></svg> Ge-mini`;
-        bubble.appendChild(label);
-        
+        bubble.appendChild(buildAiLabel(modelName));
         content.classList.add("markdown-body");
         content.innerHTML = DOMPurify.sanitize(marked.parse(text));
       } else {
-        // En el user message, textContent respetará los saltos de línea gracias a white-space: pre-wrap
         content.textContent = text;
       }
 
@@ -754,16 +772,12 @@
     //  CHAT — Envío y recepción
     // ══════════════════════════════════════════════
 
-    function createStreamingAiBubble() {
+    function createStreamingAiBubble(modelName) {
       if (emptyState) emptyState.style.display = 'none';
 
       const bubble = document.createElement("div");
       bubble.classList.add("message", "ai");
-      
-      const label = document.createElement("div");
-      label.classList.add("label");
-      label.innerHTML = `<svg style="width:12px; height:12px; margin-right:4px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L4 7l8 5 8-5-8-5zM4 12l8 5 8-5M4 17l8 5 8-5"/></svg> Ge-mini`;
-      bubble.appendChild(label);
+      bubble.appendChild(buildAiLabel(modelName));
 
       const content = document.createElement("div");
       content.classList.add("content", "markdown-body");
@@ -818,7 +832,7 @@
           // Al recibir el primer chunk, quitamos los puntitos y creamos la burbuja
           if (!aiMsgContent) {
             hideTyping();
-            aiMsgContent = createStreamingAiBubble();
+            aiMsgContent = createStreamingAiBubble(modelSelector.value);
           }
 
           let chunk = decoder.decode(value, { stream: true });
