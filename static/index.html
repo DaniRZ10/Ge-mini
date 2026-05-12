@@ -606,14 +606,17 @@
       conversations.forEach(conv => {
         const item = document.createElement("div");
         item.classList.add("history-item");
+        item.dataset.convId = conv.id; // Para poder actualizar el active sin re-renderizar
         if (conv.id === currentConversationId) {
           item.classList.add("active");
         }
 
+        // El listener está en todo el item, no solo en el span
+        item.addEventListener("click", () => loadConversation(conv.id));
+
         const titleSpan = document.createElement("span");
         titleSpan.classList.add("title");
         titleSpan.textContent = conv.title;
-        titleSpan.addEventListener("click", () => loadConversation(conv.id));
 
         const deleteBtn = document.createElement("button");
         deleteBtn.classList.add("delete-btn");
@@ -630,8 +633,20 @@
       });
     }
 
+    // Actualiza solo la clase active sin re-renderizar toda la lista
+    function setActiveHistoryItem(conversationId) {
+      historyList.querySelectorAll(".history-item").forEach(el => {
+        el.classList.toggle("active", el.dataset.convId === conversationId);
+      });
+    }
+
     async function loadConversation(conversationId) {
+      // Evitar re-cargar la misma conversación
+      if (conversationId === currentConversationId) return;
       currentConversationId = conversationId;
+
+      // Marcar el item activo inmediatamente, sin re-renderizar la lista
+      setActiveHistoryItem(conversationId);
 
       // Limpiar mensajes actuales
       messagesEl.innerHTML = "";
@@ -646,7 +661,6 @@
         });
 
         scrollToBottom();
-        await loadConversations(); // Actualizar sidebar para marcar el activo
       } catch (e) {
         console.error("Error cargando conversación:", e);
       }
