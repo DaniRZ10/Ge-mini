@@ -582,6 +582,8 @@
     let streamingConvId = null;      // ID de la conversación que se está streameando
     let streamingModel = null;       // Modelo usado en el stream activo
     const unreadConvIds = new Set(); // Conversaciones con mensajes no leídos
+    const scrollPositions = new Map(); // Posición de scroll por conversación
+    const draftTexts = new Map();      // Borrador del input por conversación
 
     // ── Helper: cancela stream en vuelo (solo desde startNewChat, no al navegar) ──
     function abortCurrentStream() {
@@ -702,14 +704,26 @@
     async function loadConversation(conversationId) {
       if (conversationId === currentConversationId) return;
 
+      // ── Guardar estado del chat saliente ──
+      if (currentConversationId !== null) {
+        scrollPositions.set(currentConversationId, messagesWrapper.scrollTop);
+        draftTexts.set(currentConversationId, input.value);
+      }
+
       currentConversationId = conversationId;
-      unreadConvIds.delete(conversationId); // Marcar como leído al entrar
+      unreadConvIds.delete(conversationId);
       setActiveHistoryItem(conversationId);
-      // Quitar badge de no leído si existe en el sidebar
       const badgeEl = historyList.querySelector(`[data-conv-id="${conversationId}"] .unread-badge`);
       if (badgeEl) badgeEl.remove();
       messagesEl.innerHTML = "";
       if (emptyState) emptyState.style.display = "none";
+
+      // ── Restaurar borrador del chat entrante ──
+      input.value = draftTexts.get(conversationId) || "";
+      input.style.height = "auto";
+      if (input.value) {
+        input.style.height = Math.min(input.scrollHeight, 200) + "px";
+      }
 
       try {
         const res = await fetch(`/api/conversations/${conversationId}/messages`);
@@ -737,7 +751,13 @@
           }
         }
 
-        scrollToBottom();
+        // ── Restaurar posición de scroll ──
+        // Primera visita → ir al final. Visita posterior → donde lo dejaste.
+        if (scrollPositions.has(conversationId)) {
+          messagesWrapper.scrollTop = scrollPositions.get(conversationId);
+        } else {
+          messagesWrapper.scrollTop = messagesWrapper.scrollHeight;
+        }
       } catch (e) {
         console.error("Error cargando conversación:", e);
       }
