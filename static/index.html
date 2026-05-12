@@ -132,6 +132,15 @@
       opacity: 0.7;
     }
 
+    .history-list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding-right: 4px;
+    }
+
     .history-item {
       height: 46px;
       padding: 0 14px;
@@ -144,6 +153,7 @@
       transition: all var(--transition);
       display: flex;
       align-items: center;
+      justify-content: space-between;
       gap: 12px;
       animation: slideIn 0.3s ease-out;
     }
@@ -160,7 +170,53 @@
       border-color: rgba(129, 140, 248, 0.3);
     }
 
+    .history-item .title {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+    }
+
+    .history-item .delete-btn {
+      display: none;
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      line-height: 1;
+      font-size: 0.85rem;
+      flex-shrink: 0;
+      transition: var(--transition);
+    }
+
+    .history-item:hover .delete-btn { display: flex; }
+    .history-item .delete-btn:hover { color: var(--danger); background: rgba(244, 63, 94, 0.1); }
+
+    /* ── Model Selector Styling ── */
+    #model-selector {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius);
+      color: var(--text-primary);
+      padding: 12px;
+      font-family: var(--font-main);
+      font-size: 0.9rem;
+      outline: none;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      background-size: 14px;
+      transition: var(--transition);
+    }
+
     /* ── MAIN VIEW ── */
+    #layout { display: flex; height: 100vh; width: 100vw; }
+
     #chat-view {
       flex: 1;
       display: flex;
@@ -178,36 +234,145 @@
       background: rgba(10, 11, 14, 0.7);
       padding: 16px 28px;
       border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 5;
     }
 
-    body.light-mode #chat-header {
-      background: rgba(248, 250, 252, 0.7);
+    body.light-mode #chat-header { background: rgba(248, 250, 252, 0.7); }
+
+    .logo-dot {
+      width: 24px; height: 24px;
+      margin-right: 12px;
+      color: var(--accent);
+      filter: drop-shadow(0 0 5px var(--accent-glow));
     }
 
+    #theme-toggle {
+      background: transparent;
+      border: 1px solid var(--border-subtle);
+      border-radius: 50%;
+      width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      color: var(--text-primary);
+      transition: var(--transition);
+    }
+
+    /* ── MESSAGES ── */
+    #messages-wrapper {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    #messages {
+      width: 100%;
+      max-width: 800px;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+      padding: 40px 24px 180px 24px;
+    }
+
+    .message {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      animation: fadeInUp 0.4s ease-out both;
+    }
+
+    .message.user { align-items: flex-end; }
     .message.user .content {
       background: var(--msg-user-bg);
       padding: 16px 22px;
       border-radius: 20px 20px 4px 20px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      max-width: 85%;
+      white-space: pre-wrap;
     }
 
-    .message.ai .content {
-      padding: 10px 0;
+    .message.ai { align-items: flex-start; }
+    .message.ai .label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .message.ai .label svg { width: 14px; height: 14px; }
+    .message.ai .content { max-width: 100%; line-height: 1.7; }
+
+    /* ── ESTILOS MARKDOWN ── */
+    .markdown-body { display: flex; flex-direction: column; gap: 14px; width: 100%; }
+    .markdown-body code { background: rgba(129, 140, 248, 0.1); padding: 3px 6px; border-radius: 6px; color: var(--accent); font-family: monospace; }
+    .markdown-body pre { background: #010204; padding: 20px; border-radius: 12px; border: 1px solid var(--border-subtle); overflow-x: auto; }
+
+    #empty-state {
+      margin-top: 25vh;
+      display: flex; flex-direction: column; align-items: center; gap: 20px;
+      color: var(--text-secondary);
+      text-align: center;
+    }
+    #empty-state .icon { width: 80px; height: 80px; color: var(--accent); opacity: 0.5; }
+
+    /* ── INPUT FLOTANTE ── */
+    #input-container {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      padding: 30px;
+      background: linear-gradient(0deg, var(--bg-primary) 50%, transparent 100%);
+      display: flex;
+      justify-content: center;
+      z-index: 5;
     }
 
     #input-area {
+      width: 100%;
+      max-width: 760px;
+      display: flex;
+      align-items: flex-end;
+      gap: 14px;
       background: var(--bg-secondary);
       backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
       border: 1px solid var(--border-subtle);
       border-radius: 20px;
-      padding: 8px 16px;
+      padding: 10px 16px;
       box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+      transition: all var(--transition);
+    }
+    
+    #input-area:focus-within { border-color: var(--accent); box-shadow: 0 10px 40px var(--accent-glow); }
+
+    #user-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-primary);
+      font-family: var(--font-main);
+      font-size: 1rem;
+      outline: none;
+      resize: none;
+      max-height: 200px;
+      padding: 10px 0;
     }
 
     #send-btn {
       width: 44px; height: 44px;
-      border-radius: 14px;
+      border: none; border-radius: 14px;
       background: var(--accent);
+      color: #fff;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all var(--transition);
       box-shadow: 0 4px 12px var(--accent-glow);
     }
     #send-btn:hover { background: var(--accent-hover); transform: scale(1.05); }
