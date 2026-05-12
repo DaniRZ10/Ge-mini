@@ -82,6 +82,7 @@
     /* ── SIDEBAR GLASSMORPHISM ── */
     #sidebar {
       width: 280px;
+      height: 100vh;
       background: var(--bg-sidebar);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
@@ -127,16 +128,18 @@
     }
 
     .history-list {
-      flex: 1;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
       gap: 4px;
       padding-right: 4px;
+      max-height: 350px; /* Altura fija para ~6-7 items de 46px cada uno */
     }
 
     .history-item {
       height: 46px;
+      min-height: 46px; /* Altura mínima fija */
+      flex-shrink: 0; /* NO permitir que se comprima */
       padding: 0 14px;
       border-radius: 10px;
       background: transparent;
