@@ -27,16 +27,12 @@ ESTRATEGIA DE MOCK:
 """
 import pytest
 
-import httpx
-
-from app.api.dependencies import get_chat_service
 from app.infrastructure.database.repositories import (
     SqlAlchemyConversationRepository,
     SqlAlchemyMessageRepository,
 )
 from app.application.services.chat_service import ChatService
 from tests.conftest import (
-    ControllableProvider,
     SwitchableFactory,
     TestSessionLocal,
 )
@@ -67,7 +63,7 @@ def _make_override(factory: SwitchableFactory):
 
 @pytest.mark.asyncio
 async def test_1_1_model_sealed_at_dispatch_not_at_response(
-    client, provider_a, provider_b
+    client, provider_a, provider_b, override_chat_service
 ):
     """
     DADO que el modelo activo es A y se despacha una request
@@ -85,15 +81,10 @@ async def test_1_1_model_sealed_at_dispatch_not_at_response(
     # El hook simula: "mientras A responde, el usuario cambia a B"
     provider_a.on_send_hook = lambda: factory.switch_to(provider_b)
 
-    from app.main import app
-    app.dependency_overrides[get_chat_service] = _make_override(factory)
-
-    try:
+    async with override_chat_service(factory):
         response = await client.post(
             "/api/chat", json={"message": "Hola", "model": "model-a"}
         )
-    finally:
-        app.dependency_overrides.pop(get_chat_service, None)
 
     assert response.status_code == 200
     data = response.json()
@@ -119,7 +110,7 @@ async def test_1_1_model_sealed_at_dispatch_not_at_response(
 
 @pytest.mark.asyncio
 async def test_1_2_switch_before_dispatch_uses_new_model(
-    client, provider_a, provider_b
+    client, provider_a, provider_b, override_chat_service
 ):
     """
     DADO que el modelo activo es A
@@ -132,15 +123,10 @@ async def test_1_2_switch_before_dispatch_uses_new_model(
     # Switch ANTES del dispatch — el usuario cambia de modelo antes de enviar
     factory.switch_to(provider_b)
 
-    from app.main import app
-    app.dependency_overrides[get_chat_service] = _make_override(factory)
-
-    try:
+    async with override_chat_service(factory):
         response = await client.post(
             "/api/chat", json={"message": "Pregunta", "model": "model-b"}
         )
-    finally:
-        app.dependency_overrides.pop(get_chat_service, None)
 
     assert response.status_code == 200
     data = response.json()
@@ -160,7 +146,7 @@ async def test_1_2_switch_before_dispatch_uses_new_model(
 
 @pytest.mark.asyncio
 async def test_1_3_rapid_switches_resolve_to_last_active_model(
-    client, provider_a, provider_b, provider_c
+    client, provider_a, provider_b, provider_c, override_chat_service
 ):
     """
     DADO que se cambia A → B → C en rápida sucesión sin requests de por medio
@@ -174,15 +160,10 @@ async def test_1_3_rapid_switches_resolve_to_last_active_model(
     factory.switch_to(provider_b)
     factory.switch_to(provider_c)
 
-    from app.main import app
-    app.dependency_overrides[get_chat_service] = _make_override(factory)
-
-    try:
+    async with override_chat_service(factory):
         response = await client.post(
             "/api/chat", json={"message": "Test rápido", "model": "model-c"}
         )
-    finally:
-        app.dependency_overrides.pop(get_chat_service, None)
 
     assert response.status_code == 200
     data = response.json()
@@ -205,7 +186,7 @@ async def test_1_3_rapid_switches_resolve_to_last_active_model(
 
 @pytest.mark.asyncio
 async def test_1_4a_switch_before_dispatch_avoids_local_down(
-    client, local_down_provider, cloud_provider
+    client, local_down_provider, cloud_provider, override_chat_service
 ):
     """
     DADO que el modelo activo es LOCAL y está caído
@@ -218,16 +199,11 @@ async def test_1_4a_switch_before_dispatch_avoids_local_down(
     # Switch a CLOUD antes del dispatch (el usuario reacciona a tiempo)
     factory.switch_to(cloud_provider)
 
-    from app.main import app
-    app.dependency_overrides[get_chat_service] = _make_override(factory)
-
-    try:
+    async with override_chat_service(factory):
         # No debe devolver error 500
         response = await client.post(
             "/api/chat", json={"message": "Consulta cloud", "model": "gemini-model"}
         )
-    finally:
-        app.dependency_overrides.pop(get_chat_service, None)
 
     assert response.status_code == 200
     data = response.json()
@@ -248,7 +224,7 @@ async def test_1_4a_switch_before_dispatch_avoids_local_down(
 
 @pytest.mark.asyncio
 async def test_1_4b_switch_after_dispatch_reports_local_error(
-    client, local_down_provider, cloud_provider
+    client, local_down_provider, cloud_provider, override_chat_service
 ):
     """
     DADO que el modelo activo es LOCAL y está caído
@@ -265,18 +241,18 @@ async def test_1_4b_switch_after_dispatch_reports_local_error(
     # El hook simula: el usuario cambia a cloud MIENTRAS local ya estaba ejecutando
     local_down_provider.on_send_hook = lambda: factory.switch_to(cloud_provider)
 
-    from app.main import app
-    app.dependency_overrides[get_chat_service] = _make_override(factory)
-
-    try:
+    async with override_chat_service(factory):
         response = await client.post(
             "/api/chat", json={"message": "Consulta local", "model": "qwen-model"}
         )
-    finally:
-        app.dependency_overrides.pop(get_chat_service, None)
 
     # El error de local DEBE propagarse como 500 — no swallowear ni devolver 200
     assert response.status_code == 500
+
+    # Verificar que el error contiene información del fallo de conexión
+    error_data = response.json()
+    assert "detail" in error_data
+    assert "connect" in error_data["detail"].lower() or "error" in error_data["detail"].lower()
 
     # Local intentó ejecutar (y falló con el hook activado)
     assert len(local_down_provider.call_log) == 1
