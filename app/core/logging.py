@@ -13,6 +13,6 @@ def setup_logging():
     
     # Reducir verbosidad de librerías externas
     logging.getLogger("httpx").setLevel(logging.WARNING)
-    logging.getLogger("google.generativeai").setLevel(logging.ERROR)
+    logging.getLogger("google.genai").setLevel(logging.ERROR)
 
 logger = logging.getLogger("ge-mini")
