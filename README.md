@@ -77,7 +77,7 @@ Ge-mini/
 - **ORM/Persistencia:** SQLAlchemy 2.0 (Async) + Alembic para migraciones.
 - **Frontend:** JavaScript Vanilla + DOMPurify (Seguridad) + Marked.js.
 - **Logging:** Módulo `logging` configurado para depuración estructurada.
-- **IA Cloud:** SDK Oficial de Google Generative AI + Groq SDK.
+- **IA Cloud:** SDK `google-genai` (Google Gen AI SDK) + Groq SDK.
 
 ---
 *Desarrollado con ❤️ para el proyecto Ge-mini.*
