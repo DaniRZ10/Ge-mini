@@ -24,10 +24,10 @@
 - [x] 4.1 Ejecutar `pytest` y confirmar que toda la suite sigue verde sin tocar tests
 - [x] 4.2 Ejecutar `python -c "import app.infrastructure.ai.gemini_adapter"` y confirmar que no hay imports residuales de `google.generativeai` ni `google.api_core`
 - [x] 4.3 `grep -rn "google.generativeai\|google-generativeai\|google.api_core" app README.md` debe devolver cero coincidencias
-- [ ] 4.4 Con un `GEMINI_API_KEY` real: arrancar `uvicorn app.main:app`, comprobar que `/api/models` devuelve modelos Gemini, que `/api/chat` con un modelo Gemini responde, y que `/api/stream` emite chunks visibles en el frontend
-- [ ] 4.5 Validar manualmente el camino de cuota: forzar un 429 (modelo restringido o spam controlado) y confirmar el texto exacto definido en el spec tanto para `send_message` como para `send_message_stream`
+- [x] 4.4 Con un `GEMINI_API_KEY` real: arrancar `uvicorn app.main:app`, comprobar que `/api/models` devuelve modelos Gemini, que `/api/chat` con un modelo Gemini responde, y que `/api/stream` emite chunks visibles en el frontend
+- [x] 4.5 Validar manualmente el camino de cuota: forzar un 429 (modelo restringido o spam controlado) y confirmar el texto exacto definido en el spec tanto para `send_message` como para `send_message_stream`
 
 ## 5. Cierre
 
-- [ ] 5.1 Hacer commits atómicos: (a) migración del adaptador, (b) logger, (c) README
+- [x] 5.1 Hacer commits atómicos: (a) migración del adaptador, (b) logger, (c) README
 - [x] 5.2 Ejecutar `openspec validate migrate-to-google-genai-sdk --strict` y dejar el cambio listo para `/opsx:archive`
