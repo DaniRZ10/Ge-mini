@@ -105,6 +105,7 @@ def main():
             print(f"Métricas: TTFT={metrics['ttft']:.2f}s, Latencia={metrics['total_latency']:.2f}s, TPS={metrics['tps']:.1f}")
             print("-"*30)
             
+            status = "N/A"
             valid = False
             while not valid:
                 choice = input("\nResultado (V/P/I - Válido/Parcial/Inválido): ").upper()
