@@ -64,24 +64,17 @@ Los specs canónicos del proyecto viven en `openspec/specs/` y se actualizan con
 
 ## Estrategia de modelos por fase
 
-⚠️ INSTRUCCIÓN OBLIGATORIA: Antes de comenzar cada fase, el agente debe mostrar este aviso y esperar confirmación:
-
-> "🔄 Cambio de fase: [nombre de fase]
-> Modelo recomendado para esta fase: [modelo]
-> Temperatura recomendada: [valor]
-> Por favor cambia el modelo en el selector antes de continuar. Cuando lo hayas hecho, escribe 'listo'."
-
-| Fase del ciclo | Modelo recomendado | Temperatura | Motivo |
+| Fase | Agente | Modelo | Motivo |
 |---|---|---|---|
-| Explore + Design (artefactos) | Claude Sonnet | 0.4 | Razonamiento abierto, decisiones arquitectónicas |
-| Validación de artefactos | Claude Sonnet | 0.1 | Máxima consistencia, sin creatividad |
-| Development (`/opsx-apply`) | Claude Haiku | 0.2 | Ejecución estructurada, instrucciones claras |
-| QA (`/opsx-verify`) | Claude Sonnet | 0.1 | Razonamiento sobre cumplimiento de specs |
-| Reconciliation | Claude Sonnet | 0.4 | Comparar código real vs spec planificada |
-| Documentation | Claude Haiku | 0.3 | Trabajo por plantilla, sin razonamiento abierto |
-| Sync + Archive | Claude Haiku | — | Mecánico puro |
+| Design / Reconciliation | spec-designer | Claude Sonnet 4.6 (Thinking) | Razonamiento abierto, decisiones arquitectónicas |
+| Validación de artefactos | spec-validator | Gemini 3.1 Pro (High) | Máxima consistencia, revisión sin creatividad |
+| Development | spec-developer | Gemini 3.5 Flash (High) | Ejecución estructurada, rápido |
+| QA | spec-qa | Gemini 3.1 Pro (High) | Razonamiento sobre cumplimiento de specs |
+| Documentation | spec-documenter | Gemini 3.5 Flash (Medium) | Trabajo por plantilla |
+| Sync / Archive | spec-orchestrator | Gemini 3.5 Flash (Medium) | Mecánico puro |
 
-> Subir a Opus únicamente si el change implica rediseño de arquitectura mayor.
+> Claude Opus 4.6 (Thinking) solo si el change implica 
+> rediseño de arquitectura mayor.
 
 ---
 
