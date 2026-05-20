@@ -39,15 +39,17 @@ Antes de comenzar cada fase muestra este bloque y espera "listo":
 
 | Fase | Modelo | Temp |
 |---|---|---|
-| Explore · Design · Artefactos | claude-sonnet-4-5 | 0.4 |
-| Validación de artefactos | claude-sonnet-4-5 | 0.1 |
+| Explore · Design · Artefactos | claude-sonnet-4-6 | 0.4 |
+| Validación de artefactos | claude-sonnet-4-6 | 0.1 |
 | Development `/opsx-apply` | claude-haiku-4-5 | 0.2 |
-| QA `/opsx-verify` | claude-sonnet-4-5 | 0.1 |
-| Reconciliation | claude-sonnet-4-5 | 0.4 |
+| QA `/opsx-verify` | claude-sonnet-4-6 | 0.1 |
+| Reconciliation | claude-sonnet-4-6 | 0.4 |
 | Documentation | claude-haiku-4-5 | 0.3 |
 | Sync · Archive | claude-haiku-4-5 | — |
+| Rediseño arquitectura mayor | claude-opus-4-7 | 0.4 |
 
-> Opus solo si el change implica rediseño de arquitectura mayor.
+> claude-opus-4-7 (1M context) solo si el change implica
+> rediseño de arquitectura mayor.
 
 ---
 
