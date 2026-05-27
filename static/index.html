@@ -509,13 +509,12 @@
           <option value="gemini-flash-latest">Gemini 1.5 Flash</option>
           <option value="gemini-pro-latest">Gemini 1.5 Pro</option>
         </optgroup>
-        <optgroup label="IA Local (Ollama)">
-          <option value="qwen2.5-coder:3b">Qwen 2.5 Coder (3B)</option>
-          <option value="qwen2.5-coder:1.5b">Qwen 2.5 Coder (1.5B)</option>
-          <option value="deepseek-coder:1.3b">DeepSeek Coder (1.3B)</option>
-          <option value="gemma2:2b">Gemma 2 (2B)</option>
-          <option value="phi3:mini">Phi-3 Mini (3.8B)</option>
-          <option value="gemma3:4b">Gemma 3 (4B)</option>
+        <optgroup label="IA Local (Ollama)" id="optgroup-local">
+          <option value="qwen2.5-coder:1.5b">Qwen 2.5 Coder 1.5B</option>
+          <option value="qwen2.5-coder:3b">Qwen 2.5 Coder 3B</option>
+          <option value="phi3.5:latest">Phi 3.5 Mini</option>
+          <option value="mistral:7b-instruct-q4_K_M">Mistral 7B Instruct</option>
+          <option value="qwen2.5-coder:7b">Qwen 2.5 Coder 7B</option>
         </optgroup>
         <optgroup label="Open Source (Groq)">
           <option value="llama-3.3-70b-versatile">Llama 3.3 (70B)</option>
@@ -601,6 +600,43 @@
       }
     }
 
+    async function checkLocalModelsAvailability() {
+      try {
+        const res = await fetch("/api/models/local/status");
+        if (!res.ok) return;
+        const data = await res.json();
+
+        const localOptions = document.querySelectorAll("#optgroup-local option");
+        const tooltipOllamaDown = "Ollama no está activo. Ejecuta start.bat (Windows) o sh start.sh (Linux).";
+        const tooltipNotDownloaded = "Modelo no descargado. Ejecuta install.bat (Windows) o sh install.sh (Linux).";
+
+        localOptions.forEach(opt => {
+          if (!data.ollama_running) {
+            opt.disabled = true;
+            opt.title = tooltipOllamaDown;
+          } else if (!data.available.includes(opt.value)) {
+            opt.disabled = true;
+            opt.title = tooltipNotDownloaded;
+          } else {
+            opt.disabled = false;
+            opt.title = "";
+          }
+        });
+
+        // Si el modelo actualmente seleccionado quedó deshabilitado, cambiar al primero disponible.
+        const selected = modelSelector.options[modelSelector.selectedIndex];
+        if (selected && selected.disabled) {
+          const first = Array.from(modelSelector.options).find(o => !o.disabled);
+          if (first) {
+            modelSelector.value = first.value;
+            localStorage.setItem("selectedModel", first.value);
+          }
+        }
+      } catch (e) {
+        console.warn("No se pudo verificar disponibilidad de modelos locales:", e);
+      }
+    }
+
     // ── Lógica de Modo Claro/Oscuro ──
     function initTheme() {
       const savedTheme = localStorage.getItem("theme");
@@ -652,6 +688,7 @@
     // Inicialización
     initTheme();
     initModel();
+    checkLocalModelsAvailability();
     loadConversations();
 
     function renderHistoryList(conversations) {
