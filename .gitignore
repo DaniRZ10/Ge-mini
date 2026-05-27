@@ -14,3 +14,6 @@ env/
 
 
 .claude/settings.local.json
+
+# Installer runtime artifacts
+data/installed_models.json
