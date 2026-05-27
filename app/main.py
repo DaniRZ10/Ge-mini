@@ -20,6 +20,12 @@ from .api.dependencies import get_chat_service, get_conversation_repo, get_messa
 from .infrastructure.ai.gemini_adapter import GeminiAdapter
 from .infrastructure.ai.ollama_adapter import get_ollama_installed_models
 from .infrastructure.ai.factory import KNOWN_LOCAL_MODELS
+from .infrastructure.ai.cloud_validators import (
+    validate_gemini_key,
+    validate_groq_key,
+    validate_anthropic_key,
+)
+import time as _time
 from .infrastructure.database.repositories import SqlAlchemyConversationRepository, SqlAlchemyMessageRepository
 from .application.services.chat_service import ChatService
 
@@ -72,6 +78,43 @@ async def local_model_status():
         if any(check in name for name in installed)
     ]
     return {"available": available, "all": all_tags, "ollama_running": running}
+
+# Cache simple en memoria: {provider: (timestamp, configured, valid, error)}
+_cloud_status_cache: dict = {}
+_CLOUD_CACHE_TTL = 60  # segundos
+
+
+async def _cached_validate(provider: str, validator, key: str | None):
+    now = _time.time()
+    cached = _cloud_status_cache.get(provider)
+    if cached and (now - cached[0]) < _CLOUD_CACHE_TTL:
+        return cached[1], cached[2], cached[3]
+    configured = bool(key)
+    if not configured:
+        valid, err = False, None
+    else:
+        valid, err_msg = await validator(key)
+        err = err_msg if not valid else None
+    _cloud_status_cache[provider] = (now, configured, valid, err)
+    return configured, valid, err
+
+
+@app.get("/api/models/cloud/status")
+async def cloud_model_status():
+    """Estado en tiempo real de los proveedores cloud. Cache 60s por proveedor."""
+    gemini_key = os.getenv("GEMINI_API_KEY")
+    groq_key = os.getenv("GROQ_API_KEY")
+    anthropic_key = os.getenv("ANTHROPIC_API_KEY")
+
+    g_conf, g_valid, g_err = await _cached_validate("gemini", validate_gemini_key, gemini_key)
+    q_conf, q_valid, q_err = await _cached_validate("groq", validate_groq_key, groq_key)
+    a_conf, a_valid, a_err = await _cached_validate("anthropic", validate_anthropic_key, anthropic_key)
+
+    return {
+        "gemini":    {"configured": g_conf, "valid": g_valid, "error": g_err},
+        "groq":      {"configured": q_conf, "valid": q_valid, "error": q_err},
+        "anthropic": {"configured": a_conf, "valid": a_valid, "error": a_err},
+    }
 
 # --- Endpoints: Conversaciones ---
 

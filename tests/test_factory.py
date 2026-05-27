@@ -26,10 +26,10 @@ class TestFactoryRouting:
             assert isinstance(provider, GroqAdapter), f"Fallo con modelo {model}"
 
     def test_routes_ollama_models(self):
-        """Verifica routing de los 5 modelos locales actuales (KNOWN_LOCAL_MODELS)."""
+        """Verifica routing de varios modelos del catálogo expandido."""
         factory = AiProviderFactory(system_prompt="test")
-        for model in ["qwen2.5-coder:1.5b", "qwen2.5-coder:3b", "phi3.5:latest",
-                      "mistral:7b-instruct-q4_K_M", "qwen2.5-coder:7b"]:
+        for model in ["qwen2.5-coder:0.5b", "llama3.2:1b", "qwen2.5-coder:1.5b",
+                      "mistral:7b-instruct-q4_K_M", "qwen2.5:14b", "mixtral:8x7b"]:
             provider = factory.get_provider(model)
             assert isinstance(provider, OllamaAdapter), f"Fallo con modelo {model}"
 
@@ -56,3 +56,17 @@ class TestFactoryRouting:
         factory.groq_key = "fake-key"
         provider = factory.get_provider("llama-3.1-8b-instant")
         assert isinstance(provider, GroqAdapter)
+
+    @patch.dict(os.environ, {"ANTHROPIC_API_KEY": "sk-ant-fake"})
+    def test_routes_anthropic_models(self):
+        from app.infrastructure.ai.anthropic_adapter import AnthropicAdapter
+        factory = AiProviderFactory(system_prompt="test")
+        for model in ["claude-opus-4-7", "claude-sonnet-4-6", "claude-haiku-4-5"]:
+            provider = factory.get_provider(model)
+            assert isinstance(provider, AnthropicAdapter)
+
+    @patch.dict(os.environ, {}, clear=True)
+    def test_anthropic_without_key_raises(self):
+        factory = AiProviderFactory(system_prompt="test")
+        with pytest.raises(ValueError, match="ANTHROPIC_API_KEY"):
+            factory.get_provider("claude-opus-4-7")
