@@ -18,6 +18,8 @@ from .core.logging import setup_logging
 from .api.schemas import ChatRequest, ChatResponse, ConversationOut, MessageOut
 from .api.dependencies import get_chat_service, get_conversation_repo, get_message_repo
 from .infrastructure.ai.gemini_adapter import GeminiAdapter
+from .infrastructure.ai.ollama_adapter import get_ollama_installed_models
+from .infrastructure.ai.factory import KNOWN_LOCAL_MODELS
 from .infrastructure.database.repositories import SqlAlchemyConversationRepository, SqlAlchemyMessageRepository
 from .application.services.chat_service import ChatService
 
@@ -58,6 +60,18 @@ async def list_gemini_models():
     
     adapter = GeminiAdapter(api_key, "")
     return await adapter.list_models()
+
+@app.get("/api/models/local/status")
+async def local_model_status():
+    """Estado en tiempo real de los modelos Ollama. HTTP 200 siempre; ollama_running indica si el servicio está activo."""
+    all_tags = [m["tag"] for m in KNOWN_LOCAL_MODELS]
+    all_checks = {m["tag"]: m["check"] for m in KNOWN_LOCAL_MODELS}
+    installed, running = await get_ollama_installed_models()
+    available = [
+        tag for tag, check in all_checks.items()
+        if any(check in name for name in installed)
+    ]
+    return {"available": available, "all": all_tags, "ollama_running": running}
 
 # --- Endpoints: Conversaciones ---
 
