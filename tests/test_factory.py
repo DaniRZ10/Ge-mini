@@ -26,8 +26,10 @@ class TestFactoryRouting:
             assert isinstance(provider, GroqAdapter), f"Fallo con modelo {model}"
 
     def test_routes_ollama_models(self):
+        """Verifica routing de los 5 modelos locales actuales (KNOWN_LOCAL_MODELS)."""
         factory = AiProviderFactory(system_prompt="test")
-        for model in ["qwen2.5-coder:1.5b", "qwen2.5-coder:3b", "deepseek-coder:1.3b"]:
+        for model in ["qwen2.5-coder:1.5b", "qwen2.5-coder:3b", "phi3.5:latest",
+                      "mistral:7b-instruct-q4_K_M", "qwen2.5-coder:7b"]:
             provider = factory.get_provider(model)
             assert isinstance(provider, OllamaAdapter), f"Fallo con modelo {model}"
 

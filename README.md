@@ -15,37 +15,18 @@ Ge-mini es una interfaz de chat inteligente, minimalista y de alto rendimiento q
 - **🛡️ Seguridad:** Sanitización XSS integrada con `DOMPurify` para un renderizado seguro de Markdown.
 - **📜 Migraciones:** Gestión de base de datos profesional con **Alembic**.
 
-## 🚀 Instalación Rápida
+## 🚀 Instalación
 
-1. **Clonar el repositorio:**
-   ```bash
-   git clone https://github.com/DaniRZ10/Ge-mini.git
-   cd Ge-mini
-   ```
+| Plataforma | Comando |
+|---|---|
+| Windows | Doble clic en **`install.bat`** |
+| Linux | `sh install.sh` en la raíz del proyecto |
 
-2. **Crear entorno virtual e instalar dependencias:**
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate  # En Windows: .venv\Scripts\activate
-   pip install -r requirements.txt
-   ```
+El instalador se encarga de todo: Python, entorno virtual, Ollama, descarga de modelos y claves API. No se requiere ningún software previo.
 
-3. **Configurar variables de entorno (`.env`):**
-   Crea un archivo `.env` en la raíz con tus claves de API:
-   ```env
-   GEMINI_API_KEY=tu_clave_aqui
-   GROQ_API_KEY=tu_clave_aqui
-   OLLAMA_BASE_URL=http://localhost:11434
-   ```
+Para arranques posteriores: **`start.bat`** (Windows) o **`sh start.sh`** (Linux).
 
-4. **Lanzar el servidor:**
-   ```bash
-   uvicorn app.main:app --reload
-   ```
-   *También puedes usar el script automatizado en Windows: `tools\start_app.bat`*
-
-5. **Acceder:**
-   Abre [http://127.0.0.1:8000/static/index.html](http://127.0.0.1:8000/static/index.html) en tu navegador.
+> **macOS / instalación manual:** consulta [`docs/manual/instalacion.md`](docs/manual/instalacion.md).
 
 ## 🧪 Pruebas (Testing)
 

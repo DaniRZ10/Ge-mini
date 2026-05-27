@@ -7,6 +7,23 @@ from typing import List, AsyncIterator
 from ...domain.entities import Message
 from ...domain.providers.base import AiProvider
 
+
+async def get_ollama_installed_models(base_url: str = "http://localhost:11434") -> tuple[list[str], bool]:
+    """
+    Queries the Ollama REST API and returns (installed_model_names, ollama_running).
+    Uses a short timeout so the API stays responsive even when Ollama is down.
+    """
+    try:
+        async with httpx.AsyncClient(timeout=3.0) as client:
+            response = await client.get(f"{base_url}/api/tags")
+            response.raise_for_status()
+            data = response.json()
+            installed = [m["name"] for m in data.get("models", [])]
+            return installed, True
+    except Exception:
+        return [], False
+
+
 class OllamaAdapter(AiProvider):
     def __init__(self, system_prompt: str):
         self.base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
