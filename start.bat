@@ -17,4 +17,4 @@ echo   [OK] Servidor en http://127.0.0.1:8000/static/index.html
 echo        Presiona Ctrl+C para detener.
 echo.
 .venv\Scripts\python.exe -m uvicorn app.main:app --port 8000
-pause
+exit
