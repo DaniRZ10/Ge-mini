@@ -176,30 +176,6 @@ El instalador de Ollama puede requerir permisos de administrador. Si falla, inst
 
 ---
 
-## Instalación manual (macOS / avanzado)
+## macOS
 
-Si prefieres instalar manualmente o estás en macOS:
-
-```bash
-# 1. Instalar uv
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# 2. Crear entorno virtual
-uv python install 3.12
-uv venv .venv --python 3.12
-uv pip install -r requirements.txt
-
-# 3. Instalar Ollama
-curl -fsSL https://ollama.com/install.sh | sh
-
-# 4. Descargar modelos (ejemplo)
-ollama pull qwen2.5-coder:1.5b
-
-# 5. Crear .env con tus claves
-echo "OLLAMA_BASE_URL=http://localhost:11434" > .env
-echo "GEMINI_API_KEY=tu_clave_aqui" >> .env
-
-# 6. Migraciones y arranque
-.venv/bin/python -m alembic upgrade head
-.venv/bin/python -m uvicorn app.main:app --port 8000
-```
+macOS no está soportado en esta versión. Está previsto para una release futura.

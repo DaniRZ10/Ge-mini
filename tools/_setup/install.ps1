@@ -24,11 +24,11 @@ $CATALOG = @(
     @{ Tag="llama3.2:3b";                 Name="Llama 3.2 3B";        Category="Chat general";           RamGB=5;  Check="llama3.2:3b" },
     @{ Tag="qwen2.5-coder:3b";           Name="Qwen Coder 3B";       Category="Codigo, equilibrado";    RamGB=5;  Check="qwen2.5-coder:3b" },
     @{ Tag="phi3.5:latest";               Name="Phi 3.5 Mini";        Category="Razonamiento";           RamGB=6;  Check="phi3.5" },
-    @{ Tag="mistral:7b-instruct-q4_K_M"; Name="Mistral 7B Instruct"; Category="General, maduro";        RamGB=8;  Check="mistral:7b-instruct" },
-    @{ Tag="qwen2.5-coder:7b";           Name="Qwen Coder 7B";       Category="Codigo, capaz";          RamGB=8;  Check="qwen2.5-coder:7b" },
-    @{ Tag="llama3.1:8b";                 Name="Llama 3.1 8B";        Category="Multiproposito";         RamGB=8;  Check="llama3.1:8b" },
-    @{ Tag="qwen2.5:14b";                 Name="Qwen 2.5 14B";        Category="Razonamiento avanzado";  RamGB=12; Check="qwen2.5:14b" },
-    @{ Tag="mixtral:8x7b";               Name="Mixtral 8x7B";        Category="Top tier MoE";           RamGB=28; Check="mixtral:8x7b" }
+    @{ Tag="mistral:7b-instruct-q4_K_M"; Name="Mistral 7B Instruct"; Category="General, maduro";        RamGB=9;  Check="mistral:7b-instruct" },
+    @{ Tag="qwen2.5-coder:7b";           Name="Qwen Coder 7B";       Category="Codigo, capaz";          RamGB=9;  Check="qwen2.5-coder:7b" },
+    @{ Tag="llama3.1:8b";                 Name="Llama 3.1 8B";        Category="Multiproposito";         RamGB=9;  Check="llama3.1:8b" },
+    @{ Tag="qwen2.5:14b";                 Name="Qwen 2.5 14B";        Category="Razonamiento avanzado";  RamGB=14; Check="qwen2.5:14b" },
+    @{ Tag="mixtral:8x7b";               Name="Mixtral 8x7B";        Category="Top tier MoE";           RamGB=30; Check="mixtral:8x7b" }
 )
 
 Clear-Host
@@ -51,7 +51,7 @@ Write-Host ""
 # -- Deteccion de RAM ----------------------------------------------------------
 $ramBytes = (Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory
 $RAM_GB = [math]::Round($ramBytes / 1GB)
-$RAM_USABLE = $RAM_GB - 2
+$RAM_USABLE = $RAM_GB - 3
 Write-Host "  RAM detectada: $RAM_GB GB  |  Usable para modelos: $RAM_USABLE GB" -ForegroundColor DarkGray
 Write-Host ""
 
@@ -127,7 +127,7 @@ try {
 
 # =============================================================================
 Write-Sep; Write-Host "  PASO 3/5 -- Modelos locales" -ForegroundColor White; Write-Sep
-Write-Host "  RAM disponible para modelos: $RAM_USABLE GB (margen de 2 GB para el SO)" -ForegroundColor DarkGray
+Write-Host "  RAM disponible para modelos: $RAM_USABLE GB (margen de 3 GB para el SO)" -ForegroundColor DarkGray
 Write-Host ""
 
 $installedNames = @()

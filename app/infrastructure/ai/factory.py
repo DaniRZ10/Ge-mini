@@ -18,11 +18,11 @@ LOCAL_MODELS_CATALOG: list[dict] = [
     {"name": "Llama 3.2 3B",          "tag": "llama3.2:3b",                  "check": "llama3.2:3b",          "ram_gb": 5,  "category": "Chat general"},
     {"name": "Qwen Coder 3B",         "tag": "qwen2.5-coder:3b",            "check": "qwen2.5-coder:3b",     "ram_gb": 5,  "category": "Código, equilibrado"},
     {"name": "Phi 3.5 Mini",          "tag": "phi3.5:latest",                "check": "phi3.5",               "ram_gb": 6,  "category": "Razonamiento"},
-    {"name": "Mistral 7B Instruct",   "tag": "mistral:7b-instruct-q4_K_M",  "check": "mistral:7b-instruct",  "ram_gb": 8,  "category": "General, maduro"},
-    {"name": "Qwen Coder 7B",         "tag": "qwen2.5-coder:7b",            "check": "qwen2.5-coder:7b",     "ram_gb": 8,  "category": "Código, capaz"},
-    {"name": "Llama 3.1 8B",          "tag": "llama3.1:8b",                  "check": "llama3.1:8b",          "ram_gb": 8,  "category": "Multipropósito"},
-    {"name": "Qwen 2.5 14B",          "tag": "qwen2.5:14b",                  "check": "qwen2.5:14b",          "ram_gb": 12, "category": "Razonamiento avanzado"},
-    {"name": "Mixtral 8x7B",          "tag": "mixtral:8x7b",                 "check": "mixtral:8x7b",         "ram_gb": 28, "category": "Top tier MoE"},
+    {"name": "Mistral 7B Instruct",   "tag": "mistral:7b-instruct-q4_K_M",  "check": "mistral:7b-instruct",  "ram_gb": 9,  "category": "General, maduro"},
+    {"name": "Qwen Coder 7B",         "tag": "qwen2.5-coder:7b",            "check": "qwen2.5-coder:7b",     "ram_gb": 9,  "category": "Código, capaz"},
+    {"name": "Llama 3.1 8B",          "tag": "llama3.1:8b",                  "check": "llama3.1:8b",          "ram_gb": 9,  "category": "Multipropósito"},
+    {"name": "Qwen 2.5 14B",          "tag": "qwen2.5:14b",                  "check": "qwen2.5:14b",          "ram_gb": 14, "category": "Razonamiento avanzado"},
+    {"name": "Mixtral 8x7B",          "tag": "mixtral:8x7b",                 "check": "mixtral:8x7b",         "ram_gb": 30, "category": "Top tier MoE"},
 ]
 
 # Set de tags para detección rápida en get_provider.
