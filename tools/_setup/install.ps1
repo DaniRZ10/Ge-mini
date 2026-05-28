@@ -1,6 +1,6 @@
 # =============================================================================
-#  Ge-mini — Instalador Windows (PowerShell) — smart-model-selection
-#  Ejecutado por install.bat — no llamar directamente.
+#  Ge-mini -- Instalador Windows (PowerShell) -- smart-model-selection
+#  Ejecutado por install.bat -- no llamar directamente.
 # =============================================================================
 param (
     [string]$ProjectRoot = (Split-Path -Parent (Split-Path -Parent $PSScriptRoot))
@@ -8,47 +8,47 @@ param (
 
 Set-Location $ProjectRoot
 $ErrorActionPreference = "Stop"
-$Host.UI.RawUI.WindowTitle = "Ge-mini — Instalador"
+$Host.UI.RawUI.WindowTitle = "Ge-mini -- Instalador"
 
 function Write-Ok   { param($m) Write-Host "[OK] $m" -ForegroundColor Green }
-function Write-Step { param($m) Write-Host "[··] $m" -ForegroundColor Cyan }
+function Write-Step { param($m) Write-Host "[..] $m" -ForegroundColor Cyan }
 function Write-Warn { param($m) Write-Host "[!!] $m" -ForegroundColor Yellow }
 function Write-Err  { param($m) Write-Host "[ERROR] $m" -ForegroundColor Red }
-function Write-Sep  { Write-Host ("─" * 54) -ForegroundColor DarkGray }
+function Write-Sep  { Write-Host ("-" * 54) -ForegroundColor DarkGray }
 
-# ── Catálogo de 11 modelos ────────────────────────────────────────────────────
+# -- Catalogo de 11 modelos ----------------------------------------------------
 $CATALOG = @(
-    @{ Tag="qwen2.5-coder:0.5b";         Name="Qwen Coder 0.5B";     Category="Código, ultra ligero";   RamGB=2;  Check="qwen2.5-coder:0.5b" },
+    @{ Tag="qwen2.5-coder:0.5b";         Name="Qwen Coder 0.5B";     Category="Codigo, ultra ligero";   RamGB=2;  Check="qwen2.5-coder:0.5b" },
     @{ Tag="llama3.2:1b";                 Name="Llama 3.2 1B";        Category="Chat ligero";            RamGB=2;  Check="llama3.2:1b" },
-    @{ Tag="qwen2.5-coder:1.5b";         Name="Qwen Coder 1.5B";     Category="Código, ligero";         RamGB=3;  Check="qwen2.5-coder:1.5b" },
+    @{ Tag="qwen2.5-coder:1.5b";         Name="Qwen Coder 1.5B";     Category="Codigo, ligero";         RamGB=3;  Check="qwen2.5-coder:1.5b" },
     @{ Tag="llama3.2:3b";                 Name="Llama 3.2 3B";        Category="Chat general";           RamGB=5;  Check="llama3.2:3b" },
-    @{ Tag="qwen2.5-coder:3b";           Name="Qwen Coder 3B";       Category="Código, equilibrado";    RamGB=5;  Check="qwen2.5-coder:3b" },
+    @{ Tag="qwen2.5-coder:3b";           Name="Qwen Coder 3B";       Category="Codigo, equilibrado";    RamGB=5;  Check="qwen2.5-coder:3b" },
     @{ Tag="phi3.5:latest";               Name="Phi 3.5 Mini";        Category="Razonamiento";           RamGB=6;  Check="phi3.5" },
     @{ Tag="mistral:7b-instruct-q4_K_M"; Name="Mistral 7B Instruct"; Category="General, maduro";        RamGB=8;  Check="mistral:7b-instruct" },
-    @{ Tag="qwen2.5-coder:7b";           Name="Qwen Coder 7B";       Category="Código, capaz";          RamGB=8;  Check="qwen2.5-coder:7b" },
-    @{ Tag="llama3.1:8b";                 Name="Llama 3.1 8B";        Category="Multipropósito";         RamGB=8;  Check="llama3.1:8b" },
+    @{ Tag="qwen2.5-coder:7b";           Name="Qwen Coder 7B";       Category="Codigo, capaz";          RamGB=8;  Check="qwen2.5-coder:7b" },
+    @{ Tag="llama3.1:8b";                 Name="Llama 3.1 8B";        Category="Multiproposito";         RamGB=8;  Check="llama3.1:8b" },
     @{ Tag="qwen2.5:14b";                 Name="Qwen 2.5 14B";        Category="Razonamiento avanzado";  RamGB=12; Check="qwen2.5:14b" },
     @{ Tag="mixtral:8x7b";               Name="Mixtral 8x7B";        Category="Top tier MoE";           RamGB=28; Check="mixtral:8x7b" }
 )
 
 Clear-Host
 Write-Host ""
-Write-Host "  ╔═══════════════════════════════════════════════════╗" -ForegroundColor Cyan
-Write-Host "  ║           💠  Ge-mini  —  Instalador             ║" -ForegroundColor Cyan
-Write-Host "  ╚═══════════════════════════════════════════════════╝" -ForegroundColor Cyan
+Write-Host "  =================================================" -ForegroundColor Cyan
+Write-Host "  ||        Ge-mini  --  Instalador             ||" -ForegroundColor Cyan
+Write-Host "  =================================================" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "  Ge-mini se va a instalar en este equipo. El proceso es automático:" -ForegroundColor Gray
+Write-Host "  Ge-mini se va a instalar en este equipo. El proceso es automatico:" -ForegroundColor Gray
 Write-Host ""
 Write-Host "    1. Prepara Python y el entorno aislado del proyecto." -ForegroundColor Gray
 Write-Host "    2. Instala Ollama (motor de IA local)." -ForegroundColor Gray
 Write-Host "    3. Detecta tu hardware y recomienda modelos adaptados." -ForegroundColor Gray
-Write-Host "    4. Al final te pregunta si quieres usar también modelos cloud." -ForegroundColor Gray
-Write-Host "    5. Arranca la aplicación y abre tu navegador." -ForegroundColor Gray
+Write-Host "    4. Al final te pregunta si quieres usar tambien modelos cloud." -ForegroundColor Gray
+Write-Host "    5. Arranca la aplicacion y abre tu navegador." -ForegroundColor Gray
 Write-Host ""
 Write-Host "  Puedes parar con Ctrl+C en cualquier momento." -ForegroundColor DarkGray
 Write-Host ""
 
-# ── Detección de RAM ──────────────────────────────────────────────────────────
+# -- Deteccion de RAM ----------------------------------------------------------
 $ramBytes = (Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory
 $RAM_GB = [math]::Round($ramBytes / 1GB)
 $RAM_USABLE = $RAM_GB - 2
@@ -56,7 +56,7 @@ Write-Host "  RAM detectada: $RAM_GB GB  |  Usable para modelos: $RAM_USABLE GB"
 Write-Host ""
 
 # =============================================================================
-Write-Sep; Write-Host "  PASO 1/5 — Entorno Python (uv)" -ForegroundColor White; Write-Sep
+Write-Sep; Write-Host "  PASO 1/5 -- Entorno Python (uv)" -ForegroundColor White; Write-Sep
 
 if (Get-Command uv -ErrorAction SilentlyContinue) {
     Write-Ok "uv ya instalado ($(uv --version))"
@@ -86,7 +86,7 @@ uv pip install -r requirements.txt --quiet
 Write-Ok "Dependencias instaladas"
 
 # =============================================================================
-Write-Sep; Write-Host "  PASO 2/5 — Ollama" -ForegroundColor White; Write-Sep
+Write-Sep; Write-Host "  PASO 2/5 -- Ollama" -ForegroundColor White; Write-Sep
 
 if (Get-Command ollama -ErrorAction SilentlyContinue) {
     Write-Ok "Ollama ya instalado"
@@ -121,12 +121,12 @@ try {
         $ollamaRunning = $true
         Write-Ok "Ollama arrancado"
     } catch {
-        Write-Warn "Ollama no responde. Los modelos locales no estarán disponibles."
+        Write-Warn "Ollama no responde. Los modelos locales no estaran disponibles."
     }
 }
 
 # =============================================================================
-Write-Sep; Write-Host "  PASO 3/5 — Modelos locales" -ForegroundColor White; Write-Sep
+Write-Sep; Write-Host "  PASO 3/5 -- Modelos locales" -ForegroundColor White; Write-Sep
 Write-Host "  RAM disponible para modelos: $RAM_USABLE GB (margen de 2 GB para el SO)" -ForegroundColor DarkGray
 Write-Host ""
 
@@ -140,7 +140,7 @@ if ($ollamaRunning) {
 
 function Is-Installed { param($check) return ($installedNames | Where-Object { $_ -like "*$check*" }).Count -gt 0 }
 
-# ── Calcular recomendados (algoritmo D2 del design.md) ───────────────────────
+# -- Calcular recomendados (algoritmo D2 del design.md) -----------------------
 function Compute-Recommended {
     param($catalog, $ramUsable)
     $eligible = @()
@@ -154,11 +154,11 @@ function Compute-Recommended {
 }
 $recommended = Compute-Recommended $CATALOG $RAM_USABLE
 
-# ── Mostrar tabla ─────────────────────────────────────────────────────────────
+# -- Mostrar tabla -------------------------------------------------------------
 Write-Host "  [OK]=instalado [*]=recomendado [!]=excede tu RAM" -ForegroundColor DarkGray
 Write-Host ""
-Write-Host ("  {0,-4} {1,-22} {2,-22} {3,-7} {4}" -f "Nº","Modelo","Uso","RAM","Estado")
-Write-Host ("  {0,-4} {1,-22} {2,-22} {3,-7} {4}" -f "──","──────────────────────","──────────────────────","───────","──────")
+Write-Host ("  {0,-4} {1,-22} {2,-22} {3,-7} {4}" -f "No.","Modelo","Uso","RAM","Estado")
+Write-Host ("  {0,-4} {1,-22} {2,-22} {3,-7} {4}" -f "--","----------------------","----------------------","-------","------")
 
 for ($i = 0; $i -lt $CATALOG.Count; $i++) {
     $m = $CATALOG[$i]
@@ -177,8 +177,8 @@ for ($i = 0; $i -lt $CATALOG.Count; $i++) {
 }
 
 Write-Host ""
-Write-Host "  Introduce números (ej: 1,3,5)  |  r=recomendados  |  t=todos  |  n=ninguno" -ForegroundColor DarkGray
-$selection = Read-Host "  Tu selección"
+Write-Host "  Introduce numeros (ej: 1,3,5)  |  r=recomendados  |  t=todos  |  n=ninguno" -ForegroundColor DarkGray
+$selection = Read-Host "  Tu seleccion"
 
 $toDownload = @()
 if ($selection -eq "" -or $selection -eq "r" -or $selection -eq "R") {
@@ -201,7 +201,7 @@ foreach ($idx in $toDownload) {
     if (Is-Installed $m.Check) {
         Write-Ok "$($m.Name) ya descargado"
     } elseif (-not $ollamaRunning) {
-        Write-Warn "Ollama no activo — saltando $($m.Name)"
+        Write-Warn "Ollama no activo -- saltando $($m.Name)"
     } else {
         Write-Step "Descargando $($m.Name) ($($m.RamGB) GB recomendados)..."
         ollama pull $m.Tag
@@ -210,10 +210,10 @@ foreach ($idx in $toDownload) {
     }
 }
 
-# ── Tags personalizados ───────────────────────────────────────────────────────
+# -- Tags personalizados -------------------------------------------------------
 Write-Host ""
 Write-Host "  Tags personalizados (opcional)" -ForegroundColor White
-Write-Host "  Cualquier tag de Ollama (ej: codellama:13b). Enter vacío para terminar." -ForegroundColor DarkGray
+Write-Host "  Cualquier tag de Ollama (ej: codellama:13b). Enter vacio para terminar." -ForegroundColor DarkGray
 $customTags = @()
 while ($true) {
     $ctag = Read-Host "  Tag"
@@ -226,7 +226,7 @@ while ($true) {
     }
 }
 
-# ── Estado a disco ────────────────────────────────────────────────────────────
+# -- Estado a disco ------------------------------------------------------------
 if (-not (Test-Path "data")) { New-Item -ItemType Directory "data" | Out-Null }
 $allTags  = $CATALOG | ForEach-Object { $_.Tag }
 $installed = $downloadedTags | Where-Object { $_ } | Select-Object -Unique
@@ -235,9 +235,9 @@ $installed = $downloadedTags | Where-Object { $_ } | Select-Object -Unique
 Write-Ok "Estado guardado en data\installed_models.json"
 
 # =============================================================================
-Write-Sep; Write-Host "  PASO 4/5 — Modelos cloud (opcional)" -ForegroundColor White; Write-Sep
+Write-Sep; Write-Host "  PASO 4/5 -- Modelos cloud (opcional)" -ForegroundColor White; Write-Sep
 
-# ── Leer .env existente ───────────────────────────────────────────────────────
+# -- Leer .env existente -------------------------------------------------------
 $existingGemini = ""; $existingGroq = ""; $existingAnthropic = ""
 if (Test-Path ".env") {
     $envContent = Get-Content ".env"
@@ -248,7 +248,7 @@ if (Test-Path ".env") {
     }
 }
 
-$cloudYes = Read-Host "  ¿Quieres configurar modelos en la nube? (s/N)"
+$cloudYes = Read-Host "  Quieres configurar modelos en la nube? (s/N)"
 
 if ($cloudYes -eq "s" -or $cloudYes -eq "S") {
     Write-Host ""
@@ -284,14 +284,14 @@ if ($cloudYes -eq "s" -or $cloudYes -eq "S") {
             Write-Step "Validando clave..."
             try {
                 $ok = & $Ping $v
-                if ($ok) { Write-Ok "Clave válida"; return $v }
+                if ($ok) { Write-Ok "Clave valida"; return $v }
                 else {
-                    Write-Warn "La clave parece inválida según el proveedor."
+                    Write-Warn "La clave parece invalida segun el proveedor."
                     $force = Read-Host "  Enter para guardarla igual, o vuelve a intentarlo."
                     if ($force -eq "") { return $v }
                 }
             } catch {
-                Write-Warn "No se pudo validar (sin conexión). Guardando tal como está."
+                Write-Warn "No se pudo validar (sin conexion). Guardando tal como esta."
                 return $v
             }
         }
@@ -333,14 +333,14 @@ if ($cloudYes -eq "s" -or $cloudYes -eq "S") {
             "3" {
                 if ($existingAnthropic) { Write-Ok "ANTHROPIC ya configurado, omitido"; break }
                 Write-Host ""
-                Write-Host "  ⚠ Claude Opus 4.7 tiene coste alto por token (~`$15/M output)." -ForegroundColor Yellow
+                Write-Host "  [!!] Claude Opus 4.7 tiene coste alto por token (~`$15/M output)." -ForegroundColor Yellow
                 Write-Host "    Revisa tu consola de Anthropic si planeas usarlo intensivamente." -ForegroundColor DarkGray
                 $newAnthropic = Read-ApiKey "ANTHROPIC_API_KEY" "Anthropic (Claude)" "sk-ant- + 80+ chars" "https://console.anthropic.com/" "^sk-ant-[A-Za-z0-9_`-]{80,}$" { param($k) Ping-Anthropic $k }
             }
         }
     }
 
-    # ── Regenerar .env ────────────────────────────────────────────────────────
+    # -- Regenerar .env --------------------------------------------------------
     $envLines = @("OLLAMA_BASE_URL=http://localhost:11434")
     if ($newGemini)    { $envLines += "GEMINI_API_KEY=$newGemini" }
     if ($newGroq)      { $envLines += "GROQ_API_KEY=$newGroq" }
@@ -357,18 +357,18 @@ if ($cloudYes -eq "s" -or $cloudYes -eq "S") {
 }
 
 # =============================================================================
-Write-Sep; Write-Host "  PASO 5/5 — Base de datos y arranque" -ForegroundColor White; Write-Sep
+Write-Sep; Write-Host "  PASO 5/5 -- Base de datos y arranque" -ForegroundColor White; Write-Sep
 
 Write-Step "Migraciones..."
 & ".venv\Scripts\python.exe" -m alembic upgrade head
 Write-Ok "Base de datos actualizada"
 
 Write-Host ""
-Write-Host "  ╔═══════════════════════════════════════════════════╗" -ForegroundColor Green
-Write-Host "  ║       ✅  Instalación completada                  ║" -ForegroundColor Green
-Write-Host "  ║   http://127.0.0.1:8000/static/index.html         ║" -ForegroundColor Green
-Write-Host "  ║   Futuros arranques: start.bat                    ║" -ForegroundColor Green
-Write-Host "  ╚═══════════════════════════════════════════════════╝" -ForegroundColor Green
+Write-Host "  =================================================" -ForegroundColor Green
+Write-Host "  ||      [OK] Instalacion completada            ||" -ForegroundColor Green
+Write-Host "  ||  http://127.0.0.1:8000/static/index.html  ||" -ForegroundColor Green
+Write-Host "  ||  Futuros arranques: start.bat              ||" -ForegroundColor Green
+Write-Host "  =================================================" -ForegroundColor Green
 Write-Host ""
 
 Start-Process "http://127.0.0.1:8000/static/index.html"
