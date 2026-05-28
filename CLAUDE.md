@@ -63,9 +63,16 @@ Antes de comenzar cada fase muestra este bloque y espera "listo":
 
 ---
 
-## Branching
+## Reglas de branching (OBLIGATORIO)
 
-`main` protegida · `develop` para integración · `feature/opsx-<nombre>` alineada con el change activo · `fix/<desc>` para correcciones.
+- `main` es de SOLO LECTURA. Nunca se trabaja directamente en ella. Ningún agente,
+  script ni desarrollador debe hacer commits directamente sobre `main`.
+- Todo cambio nace en una rama `feature/opsx-<nombre>` creada desde `develop`.
+- El flujo siempre es: `feature/*` → `develop` → `main`.
+- Tras cada merge `develop → main`, se hace inmediatamente un back-merge `main → develop`
+  para mantener las ramas alineadas.
+- Si se necesita un hotfix urgente: rama `hotfix/<nombre>` desde `main`,
+  mergear a `main` Y a `develop` antes de cerrarla.
 
 ---
 
