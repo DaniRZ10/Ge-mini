@@ -21,11 +21,11 @@ CATALOG=(
   "llama3.2:3b|Llama 3.2 3B|Chat general|5|llama3.2:3b"
   "qwen2.5-coder:3b|Qwen Coder 3B|Código equilibrado|5|qwen2.5-coder:3b"
   "phi3.5:latest|Phi 3.5 Mini|Razonamiento|6|phi3.5"
-  "mistral:7b-instruct-q4_K_M|Mistral 7B|General maduro|8|mistral:7b-instruct"
-  "qwen2.5-coder:7b|Qwen Coder 7B|Código capaz|8|qwen2.5-coder:7b"
-  "llama3.1:8b|Llama 3.1 8B|Multipropósito|8|llama3.1:8b"
-  "qwen2.5:14b|Qwen 2.5 14B|Razonamiento avanzado|12|qwen2.5:14b"
-  "mixtral:8x7b|Mixtral 8x7B|Top tier MoE|28|mixtral:8x7b"
+  "mistral:7b-instruct-q4_K_M|Mistral 7B|General maduro|9|mistral:7b-instruct"
+  "qwen2.5-coder:7b|Qwen Coder 7B|Código capaz|9|qwen2.5-coder:7b"
+  "llama3.1:8b|Llama 3.1 8B|Multipropósito|9|llama3.1:8b"
+  "qwen2.5:14b|Qwen 2.5 14B|Razonamiento avanzado|14|qwen2.5:14b"
+  "mixtral:8x7b|Mixtral 8x7B|Top tier MoE|30|mixtral:8x7b"
 )
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -114,7 +114,7 @@ fi
 
 # =============================================================================
 sep; echo -e "${BOLD}  PASO 3/5 — Modelos locales${NC}"; sep
-echo -e "  ${DIM}RAM disponible para modelos: ${BOLD}$((RAM_GB - 2)) GB${NC} (margen de 2 GB para el SO)"
+echo -e "  ${DIM}RAM disponible para modelos: ${BOLD}$((RAM_GB - 3)) GB${NC} (margen de 3 GB para el SO)"
 echo
 
 INSTALLED_JSON=""
@@ -125,7 +125,7 @@ fi
 is_installed() { echo "$INSTALLED_JSON" | grep -q "\"name\":\"[^\"]*${1}" && return 0 || return 1; }
 
 # ── Calcular recomendados ────────────────────────────────────────────────────
-RAM_USABLE=$((RAM_GB - 2))
+RAM_USABLE=$((RAM_GB - 3))
 ELIGIBLE_IDX=()
 for i in "${!CATALOG[@]}"; do
   IFS='|' read -r tag name cat ram check <<< "${CATALOG[$i]}"
