@@ -209,9 +209,12 @@ async def chat_stream(
                     full_reply += chunk
                     yield chunk
             finally:
-                # 2. Persistir lo que hayamos recibido, sea completo o parcial
-                if full_reply:
-                    await service.persist_assistant_message(full_reply, request.model, conv_id)
+                # 2. Persistir lo que hayamos recibido, sea completo o parcial.
+                # Si full_reply está vacío, el modelo falló antes del primer chunk.
+                # Guardamos el error como mensaje del asistente para que quede en el historial.
+                if not full_reply:
+                    full_reply = "⚠ El modelo no está disponible. Comprueba que está descargado y que Ollama está activo."
+                await service.persist_assistant_message(full_reply, request.model, conv_id)
         
         return StreamingResponse(
             stream_and_save(),
