@@ -91,21 +91,60 @@ Write-Sep; Write-Host "  PASO 2/5 -- Ollama" -ForegroundColor White; Write-Sep
 if (Get-Command ollama -ErrorAction SilentlyContinue) {
     Write-Ok "Ollama ya instalado"
 } else {
-    Write-Step "Descargando Ollama (puede pedir permisos de administrador)..."
+    Write-Host ""
+    Write-Host "  Ollama es el motor que ejecuta los modelos de IA en tu equipo." -ForegroundColor DarkGray
+    Write-Host "  Su instalador pesa aproximadamente 700 MB." -ForegroundColor DarkGray
+    Write-Host "  NO cierres esta ventana mientras se descarga." -ForegroundColor Yellow
+    Write-Host ""
+
     $ollamaInstaller = "$env:TEMP\OllamaSetup.exe"
+
     try {
-        Invoke-WebRequest "https://ollama.com/download/OllamaSetup.exe" -OutFile $ollamaInstaller -UseBasicParsing
-        Start-Process $ollamaInstaller -ArgumentList "/VERYSILENT", "/NORESTART" -Wait
+        # Descarga con progreso visible
+        Write-Step "Descargando Ollama (~700 MB)..."
+        $webClient = New-Object System.Net.WebClient
+        $lastPercent = -1
+        $webClient.DownloadProgressChanged += {
+            param($sender, $e)
+            $pct = $e.ProgressPercentage
+            if ($pct -ne $lastPercent -and $pct % 10 -eq 0) {
+                Write-Host "  Descargando... $pct%" -ForegroundColor DarkGray
+                $script:lastPercent = $pct
+            }
+        }
+        $task = $webClient.DownloadFileTaskAsync("https://ollama.com/download/OllamaSetup.exe", $ollamaInstaller)
+        while (-not $task.IsCompleted) {
+            Start-Sleep -Milliseconds 500
+        }
+        if ($task.IsFaulted) { throw $task.Exception }
+        Write-Ok "Descarga completada"
+
+        # Instalacion silenciosa — requiere admin (garantizado por install.bat)
+        Write-Step "Instalando Ollama (instalacion silenciosa)..."
+        Write-Host "  Esto puede tardar 1-2 minutos. NO cierres la ventana." -ForegroundColor Yellow
+        $proc = Start-Process $ollamaInstaller -ArgumentList "/VERYSILENT", "/NORESTART" -Wait -PassThru
+        if ($proc.ExitCode -ne 0) {
+            throw "El instalador de Ollama termino con codigo $($proc.ExitCode)"
+        }
+
+        # Recargar PATH para encontrar ollama.exe
         $env:PATH = [System.Environment]::GetEnvironmentVariable("PATH","Machine") + ";" +
                     [System.Environment]::GetEnvironmentVariable("PATH","User")
         Remove-Item $ollamaInstaller -ErrorAction SilentlyContinue
         Write-Ok "Ollama instalado"
+
     } catch {
         Write-Err "No se pudo instalar Ollama: $_"
+        Write-Host ""
+        Write-Host "  Si el problema persiste:" -ForegroundColor DarkGray
+        Write-Host "   1. Descarga Ollama manualmente desde https://ollama.com" -ForegroundColor DarkGray
+        Write-Host "   2. Instalalo y vuelve a ejecutar install.bat" -ForegroundColor DarkGray
+        pause
         exit 1
     }
 }
 
+# -- Verificar que el servicio esta activo ------------------------------------
 Write-Step "Verificando servicio Ollama..."
 $ollamaRunning = $false
 try {
@@ -113,15 +152,30 @@ try {
     $ollamaRunning = $true
     Write-Ok "Ollama activo"
 } catch {
-    Write-Step "Arrancando Ollama..."
+    Write-Step "Arrancando Ollama en segundo plano..."
     Start-Process "ollama" -ArgumentList "serve" -WindowStyle Hidden
-    Start-Sleep -Seconds 5
-    try {
-        Invoke-RestMethod "http://localhost:11434/api/tags" -TimeoutSec 5 | Out-Null
-        $ollamaRunning = $true
-        Write-Ok "Ollama arrancado"
-    } catch {
-        Write-Warn "Ollama no responde. Los modelos locales no estaran disponibles."
+
+    # Esperar hasta 30 segundos a que Ollama responda
+    $waited = 0
+    $ollamaRunning = $false
+    while ($waited -lt 30) {
+        Start-Sleep -Seconds 2
+        $waited += 2
+        try {
+            Invoke-RestMethod "http://localhost:11434/api/tags" -TimeoutSec 2 | Out-Null
+            $ollamaRunning = $true
+            Write-Ok "Ollama arrancado ($waited s)"
+            break
+        } catch { }
+        if ($waited % 6 -eq 0) {
+            Write-Host "  Esperando a Ollama... ($waited s)" -ForegroundColor DarkGray
+        }
+    }
+
+    if (-not $ollamaRunning) {
+        Write-Warn "Ollama no responde tras 30 segundos."
+        Write-Host "  Puedes continuar, pero los modelos locales no estaran disponibles ahora." -ForegroundColor DarkGray
+        Write-Host "  Vuelve a ejecutar install.bat para reintentar." -ForegroundColor DarkGray
     }
 }
 
@@ -203,6 +257,11 @@ foreach ($idx in $toDownload) {
     } elseif (-not $ollamaRunning) {
         Write-Warn "Ollama no activo -- saltando $($m.Name)"
     } else {
+        Write-Host ""
+        Write-Host "  Descargando $($m.Name)..." -ForegroundColor Cyan
+        Write-Host "  Tamano aproximado: $($m.RamGB) GB. NO cierres esta ventana." -ForegroundColor Yellow
+        Write-Host "  El progreso aparece abajo. Puede tardar varios minutos." -ForegroundColor DarkGray
+        Write-Host ""
         Write-Step "Descargando $($m.Name) ($($m.RamGB) GB recomendados)..."
         ollama pull $m.Tag
         if ($LASTEXITCODE -eq 0) { Write-Ok "$($m.Name) descargado"; $downloadedTags += $m.Tag }
